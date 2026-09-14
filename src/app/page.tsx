@@ -10,11 +10,11 @@ const NO_HACE = [
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white">
-      <nav className="flex items-center justify-between px-8 py-4 border-b border-gray-100">
-        <span className="text-2xl font-bold text-violet-700">Motor de Comisiones</span>
-        <div className="flex gap-2">
+      <nav className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-8 py-4 border-b border-gray-100">
+        <span className="text-xl font-bold text-violet-700 whitespace-nowrap">Motor de Comisiones</span>
+        <div className="flex flex-wrap gap-2">
           {PAISES.map((p) => (
-            <span key={p} className="text-xs font-medium text-gray-500 border border-gray-200 rounded-full px-3 py-1">
+            <span key={p} className="text-xs font-medium text-gray-500 border border-gray-200 rounded-full px-3 py-1 whitespace-nowrap">
               {p}
             </span>
           ))}
