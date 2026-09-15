@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PAISES_V1 } from '@/lib/dominio/tipos'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
 import { crearComisionadoConVinculo } from './actions'
+import { VincularUsuario } from './VincularUsuario'
 
 export default async function ComisionadosPage() {
   const supabase = await createClient()
@@ -9,7 +10,7 @@ export default async function ComisionadosPage() {
 
   const { data: vinculos } = await supabase
     .from('comisionado_sociedad')
-    .select('id_en_nomina, centro_costo, rol_comercial, desde, comisionados(id_comisionado, pais, identificador_personal, tipo), sociedades(nombre)')
+    .select('id_en_nomina, centro_costo, rol_comercial, desde, comisionados(id_comisionado, pais, identificador_personal, tipo, usuario_id), sociedades(nombre)')
     .order('desde', { ascending: false })
 
   return (
@@ -26,6 +27,7 @@ export default async function ComisionadosPage() {
               <th className="px-4 py-3 font-medium">Sociedad</th>
               <th className="px-4 py-3 font-medium">ID en nómina</th>
               <th className="px-4 py-3 font-medium">Rol comercial</th>
+              <th className="px-4 py-3 font-medium">Portal</th>
             </tr>
           </thead>
           <tbody>
@@ -38,10 +40,11 @@ export default async function ComisionadosPage() {
                 <td className="px-4 py-3 text-gray-500">{v.sociedades?.nombre}</td>
                 <td className="px-4 py-3 text-gray-500">{v.id_en_nomina}</td>
                 <td className="px-4 py-3 text-gray-500">{v.rol_comercial ?? '—'}</td>
+                <td className="px-4 py-3"><VincularUsuario comisionadoId={v.comisionados?.id_comisionado} vinculado={!!v.comisionados?.usuario_id} /></td>
               </tr>
             ))}
             {(vinculos ?? []).length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">Aún no hay comisionados.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-400">Aún no hay comisionados.</td></tr>
             )}
           </tbody>
         </table>

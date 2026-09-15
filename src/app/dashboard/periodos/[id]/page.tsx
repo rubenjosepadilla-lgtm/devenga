@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { AccionesPeriodo } from './AccionesPeriodo'
+import { AcuseMovimiento } from './AcuseMovimiento'
 
 export default async function PeriodoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -76,6 +77,7 @@ export default async function PeriodoDetallePage({ params }: { params: Promise<{
                 <th className="px-4 py-3 font-medium">Devengo diario</th>
                 <th className="px-4 py-3 font-medium">incide_en</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 font-medium">Acuse (§3.9)</th>
               </tr>
             </thead>
             <tbody>
@@ -87,6 +89,7 @@ export default async function PeriodoDetallePage({ params }: { params: Promise<{
                   <td className="px-4 py-3 text-gray-500">{m.devengo_diario ? 'sí' : 'no'}</td>
                   <td className="px-4 py-3 text-gray-500">{(m.incide_en ?? []).join(', ')}</td>
                   <td className="px-4 py-3 text-gray-500">{m.estado}</td>
+                  <td className="px-4 py-3"><AcuseMovimiento movimientoId={m.id_movimiento} estado={m.estado} /></td>
                 </tr>
               ))}
             </tbody>

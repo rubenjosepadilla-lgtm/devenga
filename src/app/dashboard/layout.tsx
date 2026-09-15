@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
-  LogOut, LayoutDashboard, Building2, Users, FileText, Target, Megaphone, Upload, CalendarClock,
+  LogOut, LayoutDashboard, Building2, Users, FileText, Target, Megaphone, Upload, CalendarClock, MessageSquareWarning,
 } from 'lucide-react'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
 
@@ -22,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: '/dashboard/campanas', icon: Megaphone, label: 'Campañas' },
     { href: '/dashboard/transacciones', icon: Upload, label: 'Transacciones' },
     { href: '/dashboard/periodos', icon: CalendarClock, label: 'Períodos' },
+    { href: '/dashboard/disputas', icon: MessageSquareWarning, label: 'Disputas' },
   ]
 
   return (

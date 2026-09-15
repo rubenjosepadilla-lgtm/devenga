@@ -25,13 +25,21 @@ export async function proxy(request: NextRequest) {
 
   const isAuth = !!user
   const path = request.nextUrl.pathname
-  const isPublic = path.startsWith('/login') || path.startsWith('/register') || path === '/' || path.startsWith('/api')
+  const isPublic =
+    path.startsWith('/login') || path.startsWith('/register') || path === '/' || path.startsWith('/api') ||
+    path.startsWith('/portal/login') || path.startsWith('/portal/register')
 
   if (!isAuth && !isPublic) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    // /documentos/[id] lo pueden ver tanto staff (redirige a /login) como
+    // comisionados (redirige a /portal/login) — sin sesión, manda al genérico.
+    const destino = path.startsWith('/portal') ? '/portal/login' : '/login'
+    return NextResponse.redirect(new URL(destino, request.url))
   }
   if (isAuth && (path === '/login' || path === '/register')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+  if (isAuth && (path === '/portal/login' || path === '/portal/register')) {
+    return NextResponse.redirect(new URL('/portal', request.url))
   }
 
   return supabaseResponse
