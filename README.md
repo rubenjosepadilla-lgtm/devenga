@@ -12,31 +12,31 @@ El motor **clasifica e informa**; la nómina **calcula y paga**. Ver
 
 ## Estado del proyecto
 
-**Fase 0 y Fase 1 — núcleo** (§10 de la especificación), cubriendo los cinco países desde el
-inicio.
+**Fase 0, Fase 1 (núcleo) y Fase 2 (gobierno)** (§10 de la especificación), cubriendo los cinco
+países desde el inicio.
 
 - [`docs/fase-0/`](docs/fase-0) — matriz legal por país, catálogo de conceptos, política de
   aprobaciones y esquema del movimiento de devengo.
-- [`docs/fase-1/00-resumen.md`](docs/fase-1/00-resumen.md) — qué se construyó, qué se
-  simplificó a propósito y qué falta verificar antes de usar esto con datos reales. **Léelo
-  antes de conectar un proyecto Supabase real.**
-- [`src/lib/dominio/`](src/lib/dominio) — tipos TypeScript y validaciones ejecutables de ambas
-  fases.
+- [`docs/fase-1/00-resumen.md`](docs/fase-1/00-resumen.md) y [`docs/fase-2/00-resumen.md`](docs/fase-2/00-resumen.md) —
+  qué se construyó en cada fase, qué se simplificó a propósito y qué falta verificar antes de
+  usar esto con datos reales. **Léelos antes de conectar un proyecto Supabase real.**
+- [`src/lib/dominio/`](src/lib/dominio) — tipos TypeScript y validaciones ejecutables.
 - [`src/lib/motor/`](src/lib/motor) — el motor de cálculo como funciones puras (ingesta,
-  atribución, cálculo, campañas, cierre, movimiento de devengo). `npm run demo` lo corre en
-  memoria de punta a punta.
+  atribución, cálculo, campañas, simulación, cierre, movimiento de devengo). `npm run demo` lo
+  corre en memoria de punta a punta.
 - [`supabase/schema.sql`](supabase/schema.sql) + [`seed_fase0.sql`](supabase/seed_fase0.sql) +
-  [`schema_fase1.sql`](supabase/schema_fase1.sql) — el esquema Postgres completo.
-- `src/app/dashboard/` + `src/app/api/` — UI mínima y endpoints de integración (§6).
+  [`schema_fase1.sql`](supabase/schema_fase1.sql) + [`schema_fase2.sql`](supabase/schema_fase2.sql) —
+  el esquema Postgres completo.
+- `src/app/dashboard/` + `src/app/api/` — UI mínima y endpoints de integración (§6), incluyendo
+  simulación de campañas, workflow de metas y vista previa de controles bloqueantes.
 
-Fase 2 (gobierno completo), Fase 3 (portal y disputas) y Fase 4 (opinión legal firmada por
-país) siguen pendientes.
+Fase 3 (portal y disputas) y Fase 4 (opinión legal firmada por país) siguen pendientes.
 
 ## Setup local
 
 1. Copia `.env.local.example` a `.env.local` y completa las variables de un proyecto Supabase real.
 2. Ejecuta, en este orden, contra ese proyecto: `supabase/schema.sql` → `supabase/seed_fase0.sql`
-   → `supabase/schema_fase1.sql`.
+   → `supabase/schema_fase1.sql` → `supabase/schema_fase2.sql`.
 3. `npm install && npm run dev`
 4. `npm run demo` corre el motor de cálculo en memoria, sin necesidad de Supabase.
 

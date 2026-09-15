@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
 import { crearMeta } from './actions'
+import { MetaAcciones } from './MetaAcciones'
 
 export default async function MetasPage() {
   const supabase = await createClient()
@@ -29,6 +30,7 @@ export default async function MetasPage() {
               <th className="px-4 py-3 font-medium">Magnitud</th>
               <th className="px-4 py-3 font-medium">Versión</th>
               <th className="px-4 py-3 font-medium">Estado</th>
+              <th className="px-4 py-3 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -39,12 +41,13 @@ export default async function MetasPage() {
                 <td className="px-4 py-3 text-gray-900">{m.destino_tipo}: {m.destino_id.slice(0, 8)}…</td>
                 <td className="px-4 py-3 text-gray-500">{m.periodo}</td>
                 <td className="px-4 py-3 text-gray-500">{m.magnitud} {m.unidad}</td>
-                <td className="px-4 py-3 text-gray-500">v{m.version}</td>
+                <td className="px-4 py-3 text-gray-500">v{m.version}{m.motivo_version ? ` — ${m.motivo_version}` : ''}</td>
                 <td className="px-4 py-3 text-gray-500">{m.estado}</td>
+                <td className="px-4 py-3"><MetaAcciones metaId={m.id_meta} estado={m.estado} /></td>
               </tr>
             ))}
             {(metas ?? []).length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">Aún no hay metas.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-400">Aún no hay metas.</td></tr>
             )}
           </tbody>
         </table>

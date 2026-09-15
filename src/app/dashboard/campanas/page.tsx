@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { CATALOGO_CONCEPTOS } from '@/lib/dominio/conceptos'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
-import { crearCampana, autorizarCampana, publicarCampana } from './actions'
+import { crearCampana } from './actions'
+import { CampanaAcciones } from './CampanaAcciones'
 
 export default async function CampanasPage() {
   const supabase = await createClient()
@@ -15,32 +16,16 @@ export default async function CampanasPage() {
 
       <div className="space-y-3 mb-8">
         {(campanas ?? []).map((c) => (
-          <div key={c.id_campana} className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">{c.concepto_codigo} · {c.multiplicador ? `x${c.multiplicador}` : `+${c.monto}`}</p>
-              <p className="text-xs text-gray-400">
-                {c.vigencia_hecho_desde} → {c.vigencia_hecho_hasta} · alcance: {c.alcance_retroactivo} · estado: <strong>{c.estado}</strong>
-              </p>
+          <div key={c.id_campana} className="bg-white rounded-2xl border border-gray-100 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900">{c.concepto_codigo} · {c.multiplicador ? `x${c.multiplicador}` : `+${c.monto}`}</p>
+                <p className="text-xs text-gray-400">
+                  {c.vigencia_hecho_desde} → {c.vigencia_hecho_hasta} · alcance: {c.alcance_retroactivo} · tope: {c.presupuesto_tope.toLocaleString('es-CL')} · estado: <strong>{c.estado}</strong>
+                </p>
+              </div>
             </div>
-            <div className="flex gap-2">
-              {c.estado === 'borrador' && (
-                <form action={autorizarCampana}>
-                  <input type="hidden" name="id_campana" value={c.id_campana} />
-                  <input type="hidden" name="nivel_autorizacion" value="jefatura_comercial" />
-                  <button type="submit" className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-800">
-                    Autorizar (puerta 3)
-                  </button>
-                </form>
-              )}
-              {c.estado === 'autorizada' && (
-                <form action={publicarCampana}>
-                  <input type="hidden" name="id_campana" value={c.id_campana} />
-                  <button type="submit" className="text-xs bg-violet-700 text-white px-3 py-1.5 rounded-lg hover:bg-violet-800">
-                    Publicar
-                  </button>
-                </form>
-              )}
-            </div>
+            <CampanaAcciones campanaId={c.id_campana} estado={c.estado} />
           </div>
         ))}
         {(campanas ?? []).length === 0 && <p className="text-sm text-gray-400">Aún no hay campañas.</p>}

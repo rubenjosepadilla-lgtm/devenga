@@ -12,6 +12,7 @@ import type { ComponentePlan } from '../src/lib/dominio/fase1/plan'
 import { atribuirCreditos } from '../src/lib/motor/atribucion'
 import { calcularComponente, prorratearPorCreditos } from '../src/lib/motor/calculo'
 import { construirMovimientoDevengo } from '../src/lib/motor/movimiento'
+import { simularCampana } from '../src/lib/motor/simulacion'
 
 let contador = 0
 const generarId = () => `demo-${++contador}`
@@ -139,5 +140,20 @@ console.log(`   incide_en: ${movimiento.incide_en.join(', ')}`)
 console.log(`   hash_detalle: ${movimiento.hash_detalle.slice(0, 16)}...`)
 
 if (errores.length > 0) fallar(`movimiento inválido: ${errores.join('; ')}`)
+
+// 5) Simulación de campaña (§3.5) — mismo detalle diario, campaña 2x publicada a mitad de mes.
+const campanaDemo = {
+  multiplicador: 2,
+  vigencia_hecho_desde: '2026-09-01',
+  vigencia_hecho_hasta: '2026-09-30',
+  fecha_publicacion: '2026-09-05',
+}
+const simulacion = simularCampana(detalleDiario, campanaDemo)
+console.log(`\n5) Simulación de campaña 2x publicada el ${campanaDemo.fecha_publicacion}:`)
+console.log(`   costo desde publicación: $${simulacion.costoDesdePublicacion.toLocaleString('es-CL')} (solo el crédito del 10-09)`)
+console.log(`   costo todo el período abierto: $${simulacion.costoTodoPeriodoAbierto.toLocaleString('es-CL')} (ambos créditos)`)
+
+if (Math.abs(simulacion.costoDesdePublicacion - 15_000) > 0.01) fallar(`costoDesdePublicacion esperado 15.000, obtenido ${simulacion.costoDesdePublicacion}`)
+if (Math.abs(simulacion.costoTodoPeriodoAbierto - 45_000) > 0.01) fallar(`costoTodoPeriodoAbierto esperado 45.000, obtenido ${simulacion.costoTodoPeriodoAbierto}`)
 
 console.log('\n✓ Pipeline completo sin errores de validación.')

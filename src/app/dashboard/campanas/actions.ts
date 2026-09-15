@@ -24,36 +24,7 @@ export async function crearCampana(formData: FormData) {
   revalidatePath('/dashboard/campanas')
 }
 
-/** Puerta 3 (§4.1): autoriza una campaña en borrador. No la publica todavía. */
-export async function autorizarCampana(formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('No autenticado')
-
-  const { error } = await supabase
-    .from('campanas')
-    .update({
-      estado: 'autorizada',
-      autorizador: user.email,
-      nivel_autorizacion: formData.get('nivel_autorizacion') as string,
-      autorizado_en: new Date().toISOString(),
-    })
-    .eq('id_campana', formData.get('id_campana') as string)
-
-  if (error) throw new Error(error.message)
-  revalidatePath('/dashboard/campanas')
-}
-
-/** §2.8 regla 3: una campaña no autorizada no se publica; una no publicada no calcula. */
-export async function publicarCampana(formData: FormData) {
-  const supabase = await createClient()
-
-  const { error } = await supabase
-    .from('campanas')
-    .update({ estado: 'publicada', fecha_publicacion: new Date().toISOString().slice(0, 10) })
-    .eq('id_campana', formData.get('id_campana') as string)
-    .eq('estado', 'autorizada')
-
-  if (error) throw new Error(error.message)
-  revalidatePath('/dashboard/campanas')
-}
+// Autorizar y publicar viven en /api/campanas/[id]/{autorizar,publicar} — la
+// publicación necesita simular el costo proyectado contra presupuesto_tope
+// (§2.8 regla 4) y devolver un error estructurado que la UI pueda mostrar
+// inline, algo que una server action no hace bien con `throw`.

@@ -14,7 +14,7 @@ export async function crearMeta(formData: FormData) {
     periodo: formData.get('periodo') as string,
     magnitud: Number(formData.get('magnitud')),
     unidad: formData.get('unidad') as string,
-    cargada_por: user.id,
+    cargada_por: user.email ?? user.id,
   })
 
   if (error) throw new Error(error.message)
