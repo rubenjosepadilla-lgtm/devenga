@@ -14,7 +14,7 @@ export default async function PortalLayout({ children }: { children: React.React
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <span className="text-lg font-bold text-violet-700">Portal del comisionado</span>
+          <span className="text-lg font-bold text-violet-700">Devenga <span className="font-normal text-gray-400">· Portal</span></span>
           {comisionado && (
             <div className="flex gap-4 text-sm text-gray-600">
               <Link href="/portal" className="flex items-center gap-1 hover:text-gray-900"><Home size={14} /> Inicio</Link>

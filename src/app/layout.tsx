@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Motor de Comisiones',
+  title: 'Devenga',
   description: 'Cálculo y clasificación legal de comisiones, agnóstico a la nómina — Chile, Perú, Colombia, México, Argentina.',
 }
 

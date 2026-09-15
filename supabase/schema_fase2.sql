@@ -1,5 +1,5 @@
 -- =============================================================================
--- Motor de Comisiones — Fase 2 (§10 "Gobierno")
+-- Devenga — Fase 2 (§10 "Gobierno")
 --
 -- Campañas con autorización + simulación (§3.5, §2.8 regla 4), metas con
 -- workflow (§2.7), controles bloqueantes reforzados y cierre. La mayoría del

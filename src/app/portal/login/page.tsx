@@ -24,7 +24,8 @@ export default function PortalLoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-md">
-        <span className="text-2xl font-bold text-violet-700 block mb-8">Portal del comisionado</span>
+        <span className="text-2xl font-bold text-violet-700 block">Devenga</span>
+        <span className="text-xs text-gray-400 block mb-8">Portal del comisionado</span>
         <h1 className="text-xl font-semibold text-gray-900 mb-6">Iniciar sesión</h1>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>

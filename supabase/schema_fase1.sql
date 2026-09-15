@@ -1,5 +1,5 @@
 -- =============================================================================
--- Motor de Comisiones — Fase 1 (§10 de la especificación)
+-- Devenga — Fase 1 (§10 de la especificación)
 --
 -- Núcleo: dato maestro (sociedad, comisionado, jerarquía, plan, meta, campaña,
 -- fuente, transacción), ingesta, atribución, cálculo, cierre y movimiento de

@@ -1,4 +1,4 @@
-# Motor de Comisiones
+# Devenga
 
 Motor de comisiones standalone, agnóstico a la nómina (Suel2, SAP HCM, otra, o Excel).
 Ingesta transacciones comerciales, calcula el incentivo según planes versionados, clasifica

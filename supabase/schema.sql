@@ -1,5 +1,5 @@
 -- =============================================================================
--- Motor de Comisiones — Fase 0 (§10 de la especificación)
+-- Devenga — Fase 0 (§10 de la especificación)
 --
 -- Alcance de este schema: matriz legal por país (§7), catálogo de conceptos
 -- con clasificación (§2.5), política de aprobaciones (§4) y esquema del

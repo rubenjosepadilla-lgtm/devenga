@@ -32,7 +32,8 @@ export default function PortalRegisterPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-md">
-        <span className="text-2xl font-bold text-violet-700 block mb-2">Portal del comisionado</span>
+        <span className="text-2xl font-bold text-violet-700 block">Devenga</span>
+        <span className="text-xs text-gray-400 block mb-2">Portal del comisionado</span>
         <p className="text-sm text-gray-400 mb-8">
           Crea tu cuenta y pide a tu empresa que la vincule a tu ficha de comisionado.
         </p>

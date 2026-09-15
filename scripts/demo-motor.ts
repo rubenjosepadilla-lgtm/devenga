@@ -22,7 +22,7 @@ function fallar(mensaje: string): never {
   process.exit(1)
 }
 
-console.log('--- Motor de Comisiones — prueba de humo (Fase 1) ---\n')
+console.log('--- Devenga — prueba de humo del motor (Fase 1) ---\n')
 
 // 1) Dos transacciones facturadas en Chile para el mismo comisionado, días distintos.
 const sociedadId = 'soc-demo-cl'

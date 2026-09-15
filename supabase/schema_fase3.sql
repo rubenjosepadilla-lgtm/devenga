@@ -1,5 +1,5 @@
 -- =============================================================================
--- Motor de Comisiones — Fase 3 (§10 "Portal y disputas")
+-- Devenga — Fase 3 (§10 "Portal y disputas")
 --
 -- Requiere supabase/schema.sql + seed_fase0.sql + schema_fase1.sql +
 -- schema_fase2.sql ya aplicados.

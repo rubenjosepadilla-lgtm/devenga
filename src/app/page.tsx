@@ -11,7 +11,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-white">
       <nav className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-8 py-4 border-b border-gray-100">
-        <span className="text-xl font-bold text-violet-700 whitespace-nowrap">Motor de Comisiones</span>
+        <span className="text-xl font-bold text-violet-700 whitespace-nowrap">Devenga</span>
         <div className="flex flex-wrap gap-2">
           {PAISES.map((p) => (
             <span key={p} className="text-xs font-medium text-gray-500 border border-gray-200 rounded-full px-3 py-1 whitespace-nowrap">
@@ -23,7 +23,7 @@ export default function HomePage() {
 
       <section className="max-w-4xl mx-auto px-8 py-24 text-center">
         <div className="inline-block bg-violet-50 text-violet-700 text-xs font-semibold px-3 py-1 rounded-full mb-6 uppercase tracking-wide">
-          Fase 0 — dato maestro y clasificación legal
+          Fases 0–3 — núcleo, gobierno, portal y disputas
         </div>
         <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
           Comisiones calculadas,<br />clasificadas y trazables

@@ -29,7 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="min-h-screen bg-gray-50 flex">
       <aside className="w-60 bg-white border-r border-gray-100 flex flex-col">
         <div className="px-5 py-5 border-b border-gray-100">
-          <span className="text-lg font-bold text-violet-700">Motor de Comisiones</span>
+          <span className="text-lg font-bold text-violet-700">Devenga</span>
           <p className="text-xs text-gray-400 mt-1">
             {sociedades.length > 0 ? `${sociedades.length} sociedad(es)` : 'Sin sociedades aún'}
           </p>
