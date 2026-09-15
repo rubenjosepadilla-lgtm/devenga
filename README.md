@@ -12,24 +12,33 @@ El motor **clasifica e informa**; la nómina **calcula y paga**. Ver
 
 ## Estado del proyecto
 
-**Fase 0** (§10 de la especificación): sin lógica transaccional todavía. Lo que existe:
+**Fase 0 y Fase 1 — núcleo** (§10 de la especificación), cubriendo los cinco países desde el
+inicio.
 
 - [`docs/fase-0/`](docs/fase-0) — matriz legal por país, catálogo de conceptos, política de
-  aprobaciones y esquema del movimiento de devengo, en prosa y con las etiquetas de confianza
-  de la especificación.
-- [`src/lib/dominio/`](src/lib/dominio) — la misma información como tipos TypeScript y
-  validaciones ejecutables (`validarConceptoUsable`, `validarMovimientoDevengo`).
-- [`supabase/schema.sql`](supabase/schema.sql) + [`supabase/seed_fase0.sql`](supabase/seed_fase0.sql) —
-  el mismo modelo como tablas Postgres, con los mismos CHECK/triggers bloqueantes.
+  aprobaciones y esquema del movimiento de devengo.
+- [`docs/fase-1/00-resumen.md`](docs/fase-1/00-resumen.md) — qué se construyó, qué se
+  simplificó a propósito y qué falta verificar antes de usar esto con datos reales. **Léelo
+  antes de conectar un proyecto Supabase real.**
+- [`src/lib/dominio/`](src/lib/dominio) — tipos TypeScript y validaciones ejecutables de ambas
+  fases.
+- [`src/lib/motor/`](src/lib/motor) — el motor de cálculo como funciones puras (ingesta,
+  atribución, cálculo, campañas, cierre, movimiento de devengo). `npm run demo` lo corre en
+  memoria de punta a punta.
+- [`supabase/schema.sql`](supabase/schema.sql) + [`seed_fase0.sql`](supabase/seed_fase0.sql) +
+  [`schema_fase1.sql`](supabase/schema_fase1.sql) — el esquema Postgres completo.
+- `src/app/dashboard/` + `src/app/api/` — UI mínima y endpoints de integración (§6).
 
-Fase 1 (dato maestro completo, ingesta, atribución, cálculo, cierre — Chile primero según la
-especificación, o los cinco países según se decida) todavía no está implementada.
+Fase 2 (gobierno completo), Fase 3 (portal y disputas) y Fase 4 (opinión legal firmada por
+país) siguen pendientes.
 
 ## Setup local
 
-1. Copia `.env.local.example` a `.env.local` y completa las variables de Supabase.
-2. Ejecuta `supabase/schema.sql` y luego `supabase/seed_fase0.sql` en tu proyecto Supabase.
+1. Copia `.env.local.example` a `.env.local` y completa las variables de un proyecto Supabase real.
+2. Ejecuta, en este orden, contra ese proyecto: `supabase/schema.sql` → `supabase/seed_fase0.sql`
+   → `supabase/schema_fase1.sql`.
 3. `npm install && npm run dev`
+4. `npm run demo` corre el motor de cálculo en memoria, sin necesidad de Supabase.
 
 ## Deploy en Vercel
 
