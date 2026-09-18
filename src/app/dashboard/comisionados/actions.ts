@@ -1,4 +1,5 @@
 'use server'
+import { randomUUID } from 'node:crypto'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
@@ -6,6 +7,13 @@ import { revalidatePath } from 'next/cache'
  * Crea el comisionado y su vínculo a una sociedad en la misma operación —
  * es el flujo normal descrito en §2.3: un comisionado nace ya vinculado a
  * quien lo va a comisionar.
+ *
+ * El id se genera acá en vez de leerlo de vuelta con `.select().single()`:
+ * justo después del insert, el comisionado todavía no tiene vínculo a
+ * ninguna sociedad, así que ninguna política de SELECT de `comisionados`
+ * matchea esa fila todavía — Postgres reporta ese fallo del RETURNING
+ * implícito como si fuera el propio insert ("new row violates row-level
+ * security policy"). Generar el id de antemano evita depender de leerlo de vuelta.
  */
 export async function crearComisionadoConVinculo(formData: FormData) {
   const supabase = await createClient()
@@ -19,16 +27,16 @@ export async function crearComisionadoConVinculo(formData: FormData) {
   const centro_costo = (formData.get('centro_costo') as string) || null
   const rol_comercial = (formData.get('rol_comercial') as string) || null
 
-  const { data: comisionado, error: errorComisionado } = await supabase
+  const id_comisionado = randomUUID()
+
+  const { error: errorComisionado } = await supabase
     .from('comisionados')
-    .insert({ pais, identificador_personal, tipo, vigencia_desde })
-    .select()
-    .single()
+    .insert({ id_comisionado, pais, identificador_personal, tipo, vigencia_desde })
 
   if (errorComisionado) throw new Error(errorComisionado.message)
 
   const { error: errorVinculo } = await supabase.from('comisionado_sociedad').insert({
-    comisionado_id: comisionado.id_comisionado,
+    comisionado_id: id_comisionado,
     sociedad_id,
     desde: vigencia_desde,
     id_en_nomina,
@@ -36,6 +44,11 @@ export async function crearComisionadoConVinculo(formData: FormData) {
     rol_comercial,
   })
 
-  if (errorVinculo) throw new Error(errorVinculo.message)
+  if (errorVinculo) {
+    // Compensación: no dejar un comisionado huérfano sin vínculo a ninguna sociedad.
+    await supabase.from('comisionados').delete().eq('id_comisionado', id_comisionado)
+    throw new Error(errorVinculo.message)
+  }
+
   revalidatePath('/dashboard/comisionados')
 }

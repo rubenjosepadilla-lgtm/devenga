@@ -64,6 +64,12 @@ estados, documento del comisionado, disputas con SLA, y acuse de nómina.
 
 ## Qué no se pudo verificar
 
+> **Actualización 2026-09-18:** ver [`docs/pruebas/2026-09-18-primera-prueba-real.md`](../pruebas/2026-09-18-primera-prueba-real.md) —
+> el flujo de comisionado/ingesta/cálculo/cierre/documento/acuse sí se probó
+> después contra un Supabase real. El portal del comisionado en sí
+> (`/portal/login`, `/portal/register`, disputas) sigue sin probarse. Lo que
+> sigue es la advertencia original, antes de esa prueba.
+
 Como en las fases anteriores, sin un proyecto Supabase real conectado a esta
 sesión no se pudo probar ningún flujo contra Postgres. Se verificó
 compilación, build y lint limpios. La verificación visual en navegador de

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { calcularPeriodo } from '@/lib/motor/orquestador'
+import { finDeMes } from '@/lib/dominio/fase1/periodo'
 import type { TransaccionSplit } from '@/lib/dominio/fase1/transaccion'
 
 /** §3.3 — cálculo del período. Ejecución incremental: puede correr varias veces mientras el período está abierto. */
@@ -24,15 +25,20 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const monedaSociedad = paisRow?.moneda_funcional ?? 'CLP'
 
   const inicioPeriodo = `${periodo.periodo}-01`
-  const finPeriodo = `${periodo.periodo}-31`
+  const finPeriodo = finDeMes(periodo.periodo)
 
-  const { data: transacciones } = await supabase
+  const { data: transacciones, error: errorTransacciones } = await supabase
     .from('transacciones')
     .select('*')
     .eq('sociedad_id', periodo.sociedad_id)
     .eq('estado', 'valida')
     .gte('fecha_hecho', inicioPeriodo)
     .lte('fecha_hecho', finPeriodo)
+
+  if (errorTransacciones) {
+    await supabase.from('periodos').update({ estado: 'abierto' }).eq('id', id)
+    return NextResponse.json({ error: errorTransacciones.message }, { status: 500 })
+  }
 
   const idsTransacciones = (transacciones ?? []).map((t) => t.id_transaccion)
   const { data: splits } = idsTransacciones.length
@@ -88,7 +94,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   if (idsTransacciones.length > 0) {
     await supabase.from('creditos').delete().in('transaccion_id', idsTransacciones)
     if (resultadoCalculo.creditos.length > 0) {
-      await supabase.from('creditos').insert(
+      const { error: errorCreditos } = await supabase.from('creditos').insert(
         resultadoCalculo.creditos.map((c) => ({
           id_credito: c.id_credito,
           transaccion_id: c.transaccion_id,
@@ -100,12 +106,16 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
           snapshot_jerarquia: c.snapshot_jerarquia,
         }))
       )
+      if (errorCreditos) {
+        await supabase.from('periodos').update({ estado: 'abierto' }).eq('id', id)
+        return NextResponse.json({ error: `Error al guardar créditos: ${errorCreditos.message}` }, { status: 500 })
+      }
     }
   }
 
   await supabase.from('resultados_calculo').delete().eq('periodo_id', periodo.id).eq('estado', 'preliminar')
   if (resultadoCalculo.resultados.length > 0) {
-    await supabase.from('resultados_calculo').insert(
+    const { error: errorResultados } = await supabase.from('resultados_calculo').insert(
       resultadoCalculo.resultados.map((r) => ({
         id_resultado: r.id_resultado,
         periodo_id: r.periodo_id,
@@ -121,6 +131,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
         estado: 'preliminar',
       }))
     )
+    if (errorResultados) {
+      await supabase.from('periodos').update({ estado: 'abierto' }).eq('id', id)
+      return NextResponse.json({ error: `Error al guardar resultados: ${errorResultados.message}` }, { status: 500 })
+    }
   }
 
   await supabase.from('periodos').update({ estado: 'abierto' }).eq('id', id)

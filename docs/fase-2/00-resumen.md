@@ -62,6 +62,10 @@ que nada forzara la secuencia ni la segregación de funciones.
 
 ## Qué no se pudo verificar
 
+> **Actualización 2026-09-18:** ver [`docs/pruebas/2026-09-18-primera-prueba-real.md`](../pruebas/2026-09-18-primera-prueba-real.md) —
+> esto sí se probó después contra un Supabase real. Lo que sigue es la
+> advertencia original, antes de esa prueba.
+
 Igual que en Fase 1: sin un proyecto Supabase real conectado a esta sesión,
 no se pudo ejercitar ninguna ruta nueva contra Postgres — ni la simulación,
 ni el workflow de metas, ni la vista previa de controles. Se verificó

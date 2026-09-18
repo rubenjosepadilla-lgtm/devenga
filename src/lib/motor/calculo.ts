@@ -77,8 +77,16 @@ export function calcularPoolEquipo(
   return resultado
 }
 
-export function aplicarTope(importe: number, tope?: number): number {
-  return tope !== undefined ? Math.min(importe, tope) : importe
+/**
+ * `tope` puede llegar como `null` (no solo `undefined`) cuando viene directo
+ * de una fila de Postgres vía Supabase — una columna nullable sin valor se
+ * serializa como `null`, y `null !== undefined` en JS. Comparar solo contra
+ * `undefined` dejaba pasar `Math.min(importe, null)`, que JS coacciona a
+ * `Math.min(importe, 0)` y siempre da 0. Por eso se compara con `== null`
+ * (que cubre ambos) en vez de `!== undefined`.
+ */
+export function aplicarTope(importe: number, tope?: number | null): number {
+  return tope == null ? importe : Math.min(importe, tope)
 }
 
 /**

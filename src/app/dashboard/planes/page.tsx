@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PAISES_V1 } from '@/lib/dominio/tipos'
 import { CATALOGO_CONCEPTOS } from '@/lib/dominio/conceptos'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
-import { crearPlantilla, crearComponente } from './actions'
+import { crearPlantilla, crearComponente, aprobarPlantilla, crearAsignacion } from './actions'
 
 export default async function PlanesPage() {
   const supabase = await createClient()
@@ -10,8 +10,12 @@ export default async function PlanesPage() {
 
   const { data: plantillas } = await supabase
     .from('plantillas_plan')
-    .select('*, componentes_plan(*)')
+    .select('*, componentes_plan(*), asignaciones_plan(*)')
     .order('created_at', { ascending: false })
+
+  const { data: comisionados } = await supabase
+    .from('comisionado_sociedad')
+    .select('comisionado_id, comisionados(identificador_personal)')
 
   return (
     <div>
@@ -25,6 +29,14 @@ export default async function PlanesPage() {
                 <h3 className="font-semibold text-gray-900">{p.nombre}</h3>
                 <p className="text-xs text-gray-400">{p.pais} · {p.periodicidad} · v{p.version} · {p.estado}</p>
               </div>
+              {p.estado === 'borrador' && (
+                <form action={aprobarPlantilla}>
+                  <input type="hidden" name="plantilla_id" value={p.id} />
+                  <button type="submit" className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-800">
+                    Aprobar (puerta 1)
+                  </button>
+                </form>
+              )}
             </div>
             <table className="w-full text-sm mb-2">
               <thead className="text-gray-400 text-left">
@@ -84,6 +96,28 @@ export default async function PlanesPage() {
                 </select>
                 <button type="submit" className="col-span-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">
                   Agregar componente
+                </button>
+              </form>
+            </details>
+
+            <div className="mt-3 text-xs text-gray-500">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(p.asignaciones_plan ?? []).length} asignación(es): {(p.asignaciones_plan ?? []).map((a: any) => `${a.destino_tipo}:${a.destino_id.slice(0, 8)}…`).join(', ')}
+            </div>
+            <details className="text-sm mt-1">
+              <summary className="text-violet-700 cursor-pointer">+ asignar a un comisionado</summary>
+              <form action={crearAsignacion} className="grid grid-cols-2 gap-3 mt-3">
+                <input type="hidden" name="plantilla_id" value={p.id} />
+                <input type="hidden" name="destino_tipo" value="comisionado" />
+                <select name="destino_id" required className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(comisionados ?? []).map((c: any) => (
+                    <option key={c.comisionado_id} value={c.comisionado_id}>{c.comisionados?.identificador_personal}</option>
+                  ))}
+                </select>
+                <input type="date" name="vigencia_desde" required className="border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+                <button type="submit" className="col-span-2 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">
+                  Asignar
                 </button>
               </form>
             </details>

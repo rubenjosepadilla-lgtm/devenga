@@ -13,21 +13,25 @@ El motor **clasifica e informa**; la nómina **calcula y paga**. Ver
 ## Estado del proyecto
 
 **Fase 0, Fase 1 (núcleo), Fase 2 (gobierno) y Fase 3 (portal y disputas)** (§10 de la
-especificación), cubriendo los cinco países desde el inicio.
+especificación), cubriendo los cinco países desde el inicio. **Probado de punta a punta contra
+un proyecto Supabase real** el 2026-09-18 — ver
+[`docs/pruebas/2026-09-18-primera-prueba-real.md`](docs/pruebas/2026-09-18-primera-prueba-real.md)
+para los nueve bugs reales que esa prueba encontró y corrigió (ninguno visible en revisión de
+código: RLS, fechas de fin de mes inválidas, `null` vs `undefined`, columnas anidadas vs planas).
 
 - [`docs/fase-0/`](docs/fase-0) — matriz legal por país, catálogo de conceptos, política de
   aprobaciones y esquema del movimiento de devengo.
 - [`docs/fase-1/00-resumen.md`](docs/fase-1/00-resumen.md), [`docs/fase-2/00-resumen.md`](docs/fase-2/00-resumen.md)
-  y [`docs/fase-3/00-resumen.md`](docs/fase-3/00-resumen.md) — qué se construyó en cada fase, qué
-  se simplificó a propósito y qué falta verificar antes de usar esto con datos reales. **Léelos
-  antes de conectar un proyecto Supabase real.**
+  y [`docs/fase-3/00-resumen.md`](docs/fase-3/00-resumen.md) — qué se construyó en cada fase y qué
+  se simplificó a propósito.
 - [`src/lib/dominio/`](src/lib/dominio) — tipos TypeScript y validaciones ejecutables.
 - [`src/lib/motor/`](src/lib/motor) — el motor de cálculo como funciones puras (ingesta,
   atribución, cálculo, campañas, simulación, cierre, movimiento de devengo). `npm run demo` lo
   corre en memoria de punta a punta.
 - [`supabase/schema.sql`](supabase/schema.sql) + [`seed_fase0.sql`](supabase/seed_fase0.sql) +
   [`schema_fase1.sql`](supabase/schema_fase1.sql) + [`schema_fase2.sql`](supabase/schema_fase2.sql) +
-  [`schema_fase3.sql`](supabase/schema_fase3.sql) — el esquema Postgres completo.
+  [`schema_fase3.sql`](supabase/schema_fase3.sql) + [`schema_fixes_2026_09.sql`](supabase/schema_fixes_2026_09.sql) —
+  el esquema Postgres completo, en orden de aplicación.
 - `src/app/dashboard/` — back-office de la sociedad. `src/app/portal/` — portal del comisionado
   (login propio en `/portal/login`). `src/app/api/` — endpoints de integración (§6), simulación
   de campañas, workflow de metas, controles bloqueantes, disputas y acuse de nómina.
@@ -38,7 +42,8 @@ Fase 4 (opinión legal firmada por país) sigue pendiente.
 
 1. Copia `.env.local.example` a `.env.local` y completa las variables de un proyecto Supabase real.
 2. Ejecuta, en este orden, contra ese proyecto: `supabase/schema.sql` → `supabase/seed_fase0.sql`
-   → `supabase/schema_fase1.sql` → `supabase/schema_fase2.sql` → `supabase/schema_fase3.sql`.
+   → `supabase/schema_fase1.sql` → `supabase/schema_fase2.sql` → `supabase/schema_fase3.sql` →
+   `supabase/schema_fixes_2026_09.sql`.
 3. `npm install && npm run dev`
 4. `npm run demo` corre el motor de cálculo en memoria, sin necesidad de Supabase.
 

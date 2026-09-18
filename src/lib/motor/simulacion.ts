@@ -31,7 +31,9 @@ type CampanaParaSimular = Pick<Campana, 'multiplicador' | 'monto' | 'vigencia_he
 function costoIncrementalEnVentana(baseDiaria: ImporteDiario[], desde: string, hasta: string, campana: CampanaParaSimular): { costo: number; dias: number } {
   const enVentana = baseDiaria.filter((d) => d.fecha >= desde && d.fecha <= hasta)
   const costo = enVentana.reduce((acc, d) => {
-    const conCampana = campana.multiplicador !== undefined ? d.importe * campana.multiplicador : d.importe + (campana.monto ?? 0)
+    // `!= null`: multiplicador nulo (no solo undefined) es el caso normal de
+    // una campaña que solo usa `monto` — ver el mismo comentario en motor/campana.ts.
+    const conCampana = campana.multiplicador != null ? d.importe * campana.multiplicador : d.importe + (campana.monto ?? 0)
     return acc + (conCampana - d.importe)
   }, 0)
   return { costo, dias: enVentana.length }

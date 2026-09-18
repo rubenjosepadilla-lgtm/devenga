@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { InsumosCierre } from '@/lib/motor/cierre'
 import { validarConceptoUsable, type Concepto } from '@/lib/dominio/conceptos'
+import { finDeMes } from '@/lib/dominio/fase1/periodo'
+import { filaAConcepto } from './mapeo'
 
 /**
  * Reúne, contra la base de datos, todo lo que `evaluarControlesBloqueantes`
@@ -38,7 +40,7 @@ export async function prepararDatosCierre(supabase: SupabaseClient<any>, periodo
       .select('id_transaccion')
       .eq('sociedad_id', periodo.sociedad_id)
       .gte('fecha_hecho', `${periodo.periodo}-01`)
-      .lte('fecha_hecho', `${periodo.periodo}-31`)
+      .lte('fecha_hecho', finDeMes(periodo.periodo))
   ).data?.map((t: { id_transaccion: string }) => t.id_transaccion) ?? []
 
   const { data: splits } = idsTransacciones.length
@@ -111,7 +113,7 @@ export async function prepararDatosCierre(supabase: SupabaseClient<any>, periodo
       campanasQueExcedenPresupuesto,
     },
     listaResultados,
-    conceptosPorCodigo: new Map(((conceptosDb ?? []) as Concepto[]).map((c) => [c.codigo, c])),
+    conceptosPorCodigo: new Map((conceptosDb ?? []).map((c) => [c.codigo, filaAConcepto(c)])),
     monedaSociedad,
   }
 }

@@ -7,8 +7,11 @@ import { campanaCalcula } from '../dominio/fase1/campana'
  */
 export function aplicarCampana(importeBase: number, campana: Campana): number {
   if (!campanaCalcula(campana)) return importeBase
-  if (campana.multiplicador !== undefined) return importeBase * campana.multiplicador
-  if (campana.monto !== undefined) return importeBase + campana.monto
+  // `!= null` a propósito: una columna nullable sin valor llega como `null`
+  // desde Postgres, no `undefined` — comparar solo con `undefined` dejaba
+  // pasar `importeBase * null` (= 0) para una campaña que solo usa `monto`.
+  if (campana.multiplicador != null) return importeBase * campana.multiplicador
+  if (campana.monto != null) return importeBase + campana.monto
   return importeBase
 }
 

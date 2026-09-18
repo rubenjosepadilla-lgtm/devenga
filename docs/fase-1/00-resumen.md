@@ -69,6 +69,11 @@ confundirlas con requisitos de negocio verificados:
 
 ## Qué no se pudo verificar
 
+> **Actualización 2026-09-18:** esto sí se probó después contra un Supabase
+> real, y encontró bugs reales (incluyendo tres tablas sin política de
+> escritura). Ver [`docs/pruebas/2026-09-18-primera-prueba-real.md`](../pruebas/2026-09-18-primera-prueba-real.md).
+> Lo que sigue es la advertencia original, antes de esa prueba.
+
 No hay un proyecto Supabase real conectado a esta sesión. Se verificó:
 
 - Compilación (`tsc --noEmit`), build de producción (`next build`) y lint,

@@ -11,7 +11,7 @@ import type { DetalleDiario } from '../dominio/movimiento-devengo'
 import { atribuirCreditos } from './atribucion'
 import { calcularComponente, calcularPoolEquipo, aplicarTope, prorratearPorCreditos } from './calculo'
 import { campanasAplicablesA, aplicarCampana } from './campana'
-import { convertir } from '../dominio/fase1/periodo'
+import { convertir, finDeMes } from '../dominio/fase1/periodo'
 
 /**
  * §3.3 — orquesta el cálculo completo de un período: atribución → cálculo
@@ -89,7 +89,7 @@ export function calcularPeriodo(insumos: InsumosPeriodo): ResultadoOrquestacion 
   for (const asignacion of asignaciones) {
     const plantilla = plantillas.find((p) => p.id === asignacion.plantilla_id)
     if (!plantilla || (plantilla.estado !== 'aprobado' && plantilla.estado !== 'vigente')) continue
-    if (asignacion.vigencia_desde > `${periodo}-31` || (asignacion.vigencia_hasta && asignacion.vigencia_hasta < `${periodo}-01`)) continue
+    if (asignacion.vigencia_desde > finDeMes(periodo) || (asignacion.vigencia_hasta && asignacion.vigencia_hasta < `${periodo}-01`)) continue
 
     const componentesDePlantilla = componentes
       .filter((c) => c.plantilla_id === plantilla.id)
