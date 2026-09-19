@@ -8,26 +8,37 @@ export interface TenantConRol {
 
 /**
  * Retorna el primer tenant activo del usuario autenticado.
- * En la fase actual cada usuario pertenece a un solo tenant.
- * Cuando admitamos multi-tenant, aquí se resolverá el tenant activo por sesión.
+ * Usa dos queries separadas para evitar depender del join relacional de PostgREST.
  */
 export async function tenantDelUsuario(): Promise<TenantConRol | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
 
-  const { data } = await supabase
-    .from('usuario_tenant')
-    .select('rol_base, tenants(*)')
-    .eq('usuario_id', user.id)
-    .eq('activo', true)
-    .limit(1)
-    .single()
+    const { data: membership, error: errMembr } = await supabase
+      .from('usuario_tenant')
+      .select('tenant_id, rol_base')
+      .eq('usuario_id', user.id)
+      .eq('activo', true)
+      .limit(1)
+      .maybeSingle()
 
-  if (!data || !data.tenants) return null
+    if (errMembr || !membership) return null
 
-  return {
-    tenant: data.tenants as unknown as Tenant,
-    rol_base: data.rol_base as RolBaseTenant,
+    const { data: tenant, error: errTenant } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('id_tenant', membership.tenant_id)
+      .maybeSingle()
+
+    if (errTenant || !tenant) return null
+
+    return {
+      tenant: tenant as unknown as Tenant,
+      rol_base: membership.rol_base as RolBaseTenant,
+    }
+  } catch {
+    return null
   }
 }

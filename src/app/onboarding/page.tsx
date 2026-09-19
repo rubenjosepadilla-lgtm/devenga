@@ -6,10 +6,11 @@ import { crearWorkspace } from './actions'
 
 export default async function OnboardingPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const authResult = await supabase.auth.getUser()
+  const user = authResult?.data?.user ?? null
+
   if (!user) redirect('/login')
 
-  // Si ya tiene tenant, no tiene nada que hacer aquí
   const ctx = await tenantDelUsuario()
   if (ctx) redirect('/dashboard')
 
