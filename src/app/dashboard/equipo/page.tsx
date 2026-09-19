@@ -16,11 +16,13 @@ export default async function EquipoPage() {
 
   // Leer emails de usuarios_app para los IDs encontrados
   const ids = (miembros ?? []).map((m) => m.usuario_id)
-  const { data: perfiles } = ids.length
-    ? await supabase.from('usuarios_app').select('id, nombre, email').in('id', ids)
-    : Promise.resolve({ data: [] })
+  let perfiles: { id: string; nombre: string; email: string }[] = []
+  if (ids.length) {
+    const { data } = await supabase.from('usuarios_app').select('id, nombre, email').in('id', ids)
+    perfiles = (data ?? []) as { id: string; nombre: string; email: string }[]
+  }
 
-  const perfilMap = Object.fromEntries((perfiles ?? []).map((p) => [p.id, p]))
+  const perfilMap = Object.fromEntries(perfiles.map((p) => [p.id, p]))
 
   const esAdmin = ctx.rol_base === 'administrador'
 
