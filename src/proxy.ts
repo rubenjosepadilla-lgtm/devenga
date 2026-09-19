@@ -38,9 +38,9 @@ export async function proxy(request: NextRequest) {
   if (isAuth && (path === '/login' || path === '/register')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
-  if (isAuth && (path === '/portal/login' || path === '/portal/register')) {
-    return NextResponse.redirect(new URL('/portal', request.url))
-  }
+  // No redirigimos usuarios autenticados fuera de /portal/login y /portal/register:
+  // el staff puede necesitar ver el link del portal, y el portal layout
+  // maneja el estado "no vinculado" sin redirect.
 
   return supabaseResponse
 }
