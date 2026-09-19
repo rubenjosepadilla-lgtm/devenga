@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 const PAISES = ['Chile', 'Perú', 'Colombia', 'México', 'Argentina']
 
 const NO_HACE = [
@@ -12,12 +14,21 @@ export default function HomePage() {
     <main className="min-h-screen bg-white">
       <nav className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-8 py-4 border-b border-gray-100">
         <span className="text-xl font-bold text-violet-700 whitespace-nowrap">Devenga</span>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {PAISES.map((p) => (
             <span key={p} className="text-xs font-medium text-gray-500 border border-gray-200 rounded-full px-3 py-1 whitespace-nowrap">
               {p}
             </span>
           ))}
+          <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 ml-2">
+            Iniciar sesión
+          </Link>
+          <Link
+            href="/register"
+            className="text-sm font-medium text-white bg-violet-700 hover:bg-violet-800 rounded-full px-4 py-1.5"
+          >
+            Crear cuenta
+          </Link>
         </div>
       </nav>
 
@@ -33,9 +44,15 @@ export default function HomePage() {
           resultado por país y lo entrega a cualquier nómina como movimientos de devengo
           inmutables, con expediente reproducible por operación.
         </p>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-gray-400 mb-10">
           El motor clasifica e informa. La nómina calcula y paga.
         </p>
+        <Link
+          href="/register"
+          className="inline-block text-sm font-medium text-white bg-violet-700 hover:bg-violet-800 rounded-full px-6 py-3"
+        >
+          Crear cuenta gratis
+        </Link>
       </section>
 
       <section className="max-w-5xl mx-auto px-8 py-16 grid grid-cols-1 md:grid-cols-4 gap-6">
