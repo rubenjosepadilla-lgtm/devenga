@@ -27,7 +27,8 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
   const isPublic =
     path.startsWith('/login') || path.startsWith('/register') || path === '/' || path.startsWith('/api') ||
-    path.startsWith('/portal/login') || path.startsWith('/portal/register')
+    path.startsWith('/portal/login') || path.startsWith('/portal/register') ||
+    path.startsWith('/onboarding')
 
   if (!isAuth && !isPublic) {
     // /documentos/[id] lo pueden ver tanto staff (redirige a /login) como

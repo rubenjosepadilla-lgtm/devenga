@@ -1,24 +1,24 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
+import { tenantDelUsuario } from '@/lib/datos/tenant'
 import { revalidatePath } from 'next/cache'
 
 export async function crearPlantilla(formData: FormData) {
   const supabase = await createClient()
+  const ctx = await tenantDelUsuario()
+  if (!ctx) throw new Error('Sin workspace activo')
 
   const { error } = await supabase.from('plantillas_plan').insert({
+    tenant_id: ctx.tenant.id_tenant,
     sociedad_id: formData.get('sociedad_id') as string,
-    nombre: formData.get('nombre') as string,
     pais: formData.get('pais') as string,
-    periodicidad: formData.get('periodicidad') as string,
-    moneda: formData.get('moneda') as string,
-    vigencia_desde: formData.get('vigencia_desde') as string,
+    nombre: formData.get('nombre') as string,
   })
 
   if (error) throw new Error(error.message)
   revalidatePath('/dashboard/planes')
 }
 
-/** Puerta 1 (§4.1) — aprobación de plantilla. Sin esto, el orquestador de cálculo (§3.3) nunca la considera. */
 export async function aprobarPlantilla(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -26,23 +26,20 @@ export async function aprobarPlantilla(formData: FormData) {
 
   const { error } = await supabase
     .from('plantillas_plan')
-    .update({ estado: 'aprobado', aprobado_por: user.email, aprobado_en: new Date().toISOString() })
-    .eq('id', formData.get('plantilla_id') as string)
+    .update({ estado: 'aprobado', aprobado_por: user.id, aprobado_en: new Date().toISOString() })
+    .eq('id_plantilla', formData.get('plantilla_id') as string)
 
   if (error) throw new Error(error.message)
   revalidatePath('/dashboard/planes')
 }
 
-/** §2.6 — asignación de una plantilla a un comisionado o nodo, con vigencia. */
 export async function crearAsignacion(formData: FormData) {
   const supabase = await createClient()
 
   const { error } = await supabase.from('asignaciones_plan').insert({
     plantilla_id: formData.get('plantilla_id') as string,
-    destino_tipo: formData.get('destino_tipo') as string,
-    destino_id: formData.get('destino_id') as string,
+    comisionado_id: formData.get('comisionado_id') as string,
     vigencia_desde: formData.get('vigencia_desde') as string,
-    prioridad: 0,
   })
 
   if (error) throw new Error(error.message)
@@ -52,17 +49,14 @@ export async function crearAsignacion(formData: FormData) {
 export async function crearComponente(formData: FormData) {
   const supabase = await createClient()
 
-  const tipo = formData.get('tipo') as string
   const tasaTexto = formData.get('tasa') as string
 
   const { error } = await supabase.from('componentes_plan').insert({
     plantilla_id: formData.get('plantilla_id') as string,
-    tipo,
     concepto_codigo: formData.get('concepto_codigo') as string,
-    base_medicion: formData.get('base_medicion') as string,
-    orden_evaluacion: Number(formData.get('orden_evaluacion')),
+    tipo_calculo: (formData.get('tipo_calculo') as string) || 'tasa_lineal',
     parametros: tasaTexto ? { tasa: Number(tasaTexto) } : {},
-    regla_reparto: tipo === 'pool_equipo' ? (formData.get('regla_reparto') as string) : null,
+    orden: Number(formData.get('orden')) || 0,
   })
 
   if (error) throw new Error(error.message)

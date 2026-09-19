@@ -1,15 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import type { SociedadResumen } from '@/lib/dominio/tipos'
 
-export interface SociedadResumen {
-  id_sociedad: string
-  nombre: string
-  pais: string
-  rol: string
-}
+export type { SociedadResumen }
 
 /**
- * Sociedades a las que el usuario autenticado pertenece (vía usuario_rol_sociedad),
- * usado por el layout del dashboard para el selector de sociedad activa.
+ * Sociedades del tenant al que pertenece el usuario autenticado.
+ * En v2 el acceso se basa en tenant_id (administrador ve todas)
+ * o en permisos operacionales explícitos.
  */
 export async function sociedadesDelUsuario(): Promise<SociedadResumen[]> {
   const supabase = await createClient()
@@ -17,25 +14,25 @@ export async function sociedadesDelUsuario(): Promise<SociedadResumen[]> {
   if (!user) return []
 
   const { data } = await supabase
-    .from('usuario_rol_sociedad')
-    .select('rol, sociedades(id_sociedad, nombre, pais)')
-    .eq('usuario_id', user.id)
+    .from('sociedades')
+    .select('id_sociedad, tenant_id, nombre, pais')
+    .order('nombre')
 
   if (!data) return []
 
-  // Un usuario puede tener varios roles en la misma sociedad: se deduplica por id_sociedad.
-  const vistos = new Map<string, SociedadResumen>()
-  for (const fila of data as unknown as { rol: string; sociedades: { id_sociedad: string; nombre: string; pais: string } | null }[]) {
-    if (!fila.sociedades) continue
-    if (!vistos.has(fila.sociedades.id_sociedad)) {
-      vistos.set(fila.sociedades.id_sociedad, { ...fila.sociedades, rol: fila.rol })
-    }
-  }
-  return Array.from(vistos.values())
+  return data.map((s) => ({
+    id_sociedad: s.id_sociedad,
+    tenant_id: s.tenant_id,
+    nombre: s.nombre,
+    pais: s.pais,
+    rol_base: 'administrador' as const,
+  }))
 }
 
-/** Resuelve la sociedad activa: la pedida por query param si el usuario pertenece a ella, si no la primera. */
-export function resolverSociedadActiva(sociedades: SociedadResumen[], solicitada?: string): SociedadResumen | undefined {
+export function resolverSociedadActiva(
+  sociedades: SociedadResumen[],
+  solicitada?: string,
+): SociedadResumen | undefined {
   if (solicitada) {
     const encontrada = sociedades.find((s) => s.id_sociedad === solicitada)
     if (encontrada) return encontrada

@@ -1,16 +1,17 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
+import { tenantDelUsuario } from '@/lib/datos/tenant'
 import { revalidatePath } from 'next/cache'
 
 export async function crearPeriodo(formData: FormData) {
   const supabase = await createClient()
+  const ctx = await tenantDelUsuario()
+  if (!ctx) throw new Error('Sin workspace activo')
 
-  const periodo = formData.get('periodo') as string
   const { error } = await supabase.from('periodos').insert({
+    tenant_id: ctx.tenant.id_tenant,
     sociedad_id: formData.get('sociedad_id') as string,
-    periodo,
-    fecha_apertura: `${periodo}-01`,
-    fecha_corte: formData.get('fecha_corte') as string,
+    periodo: formData.get('periodo') as string,
   })
 
   if (error) throw new Error(error.message)
