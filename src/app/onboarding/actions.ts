@@ -12,24 +12,17 @@ export async function crearWorkspace(formData: FormData) {
 
   if (!nombre_comercial || !pais_base) throw new Error('Faltan campos obligatorios')
 
-  // Crear el tenant
-  const { data: tenant, error: errorTenant } = await supabase
-    .from('tenants')
-    .insert({ nombre_comercial, pais_base })
-    .select('id_tenant')
-    .single()
+  // Crear tenant + membresía vía función SECURITY DEFINER (bypassa RLS)
+  const { data: tenantId, error: errorFn } = await supabase
+    .rpc('crear_tenant_inicial', {
+      p_nombre_comercial: nombre_comercial,
+      p_pais_base: pais_base,
+    })
 
-  if (errorTenant || !tenant) throw new Error(errorTenant?.message ?? 'Error al crear workspace')
-
-  // Registrar al creador como administrador del tenant
-  const { error: errorMembr } = await supabase
-    .from('usuario_tenant')
-    .insert({ usuario_id: user.id, tenant_id: tenant.id_tenant, rol_base: 'administrador' })
-
-  if (errorMembr) throw new Error(errorMembr.message)
+  if (errorFn || !tenantId) throw new Error(errorFn?.message ?? 'Error al crear workspace')
 
   // Sembrar conceptos base del país seleccionado para este tenant
-  await sembrarConceptosPais(supabase, tenant.id_tenant, pais_base)
+  await sembrarConceptosPais(supabase, tenantId as string, pais_base)
 
   redirect('/dashboard')
 }
