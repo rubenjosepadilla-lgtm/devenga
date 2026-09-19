@@ -315,12 +315,23 @@ create policy "sociedades_update" on sociedades for update
 
 -- RLS de tenants (ahora que las funciones helper existen)
 create policy "tenants_lectura" on tenants for select using (es_miembro_tenant(id_tenant));
+-- Cualquier usuario autenticado puede crear su primer tenant (onboarding)
+create policy "tenants_insert" on tenants for insert with check (auth.uid() is not null);
 create policy "tenants_update" on tenants for update using (tiene_rol_base(id_tenant, array['administrador']));
 
 -- RLS de usuario_tenant
 create policy "ut_lectura" on usuario_tenant for select using (es_miembro_tenant(tenant_id));
 create policy "ut_insert" on usuario_tenant for insert
-  with check (tiene_rol_base(tenant_id, array['administrador']));
+  with check (
+    -- Admins existentes pueden agregar miembros
+    tiene_rol_base(tenant_id, array['administrador'])
+    -- Bootstrap: el propio usuario se registra como admin de un tenant recién creado (sin miembros aún)
+    or (
+      usuario_id = auth.uid()
+      and rol_base = 'administrador'
+      and not exists (select 1 from usuario_tenant ut2 where ut2.tenant_id = usuario_tenant.tenant_id)
+    )
+  );
 create policy "ut_update" on usuario_tenant for update
   using (tiene_rol_base(tenant_id, array['administrador']));
 
