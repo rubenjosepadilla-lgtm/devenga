@@ -3,6 +3,7 @@ import { PAISES_V1 } from '@/lib/dominio/tipos'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
 import { crearComisionadoConVinculo } from './actions'
 import { VincularUsuario } from './VincularUsuario'
+import { CopiarLinkPortal } from './CopiarLinkPortal'
 
 export default async function ComisionadosPage() {
   const supabase = await createClient()
@@ -16,6 +17,14 @@ export default async function ComisionadosPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-900 mb-8">Comisionados</h1>
+
+      <div className="bg-violet-50 border border-violet-100 rounded-2xl px-5 py-4 mb-6 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-violet-900">Link de registro para comisionados</p>
+          <p className="text-xs text-violet-600 mt-0.5">Comparte esta URL con cada comisionado para que cree su cuenta en el portal.</p>
+        </div>
+        <CopiarLinkPortal />
+      </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8">
         <table className="w-full text-sm">
