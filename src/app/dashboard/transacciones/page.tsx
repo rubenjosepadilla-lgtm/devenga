@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
 import { IngestaForm } from './IngestaForm'
 import { crearFuente, resolverCuarentena } from './actions'
+import { CargaCSVTransacciones } from './CargaCSV'
 
 export default async function TransaccionesPage() {
   const supabase = await createClient()
@@ -101,6 +102,15 @@ export default async function TransaccionesPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6 max-w-xl">
           <h2 className="text-sm font-semibold text-gray-900 mb-4">Ingestar transacción</h2>
           <IngestaForm sociedades={sociedades} fuentes={fuentes ?? []} comisionados={comisionadosPlanos} />
+        </div>
+      )}
+
+      {sociedades.length > 0 && (fuentes ?? []).length > 0 && (
+        <div className="max-w-2xl">
+          <CargaCSVTransacciones
+            sociedad_id={sociedades[0].id_sociedad}
+            fuente_id={(fuentes ?? [])[0]?.id_fuente ?? ''}
+          />
         </div>
       )}
     </div>

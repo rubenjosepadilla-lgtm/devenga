@@ -4,6 +4,7 @@ import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
 import { crearComisionadoConVinculo } from './actions'
 import { VincularUsuario } from './VincularUsuario'
 import { CopiarLinkPortal } from './CopiarLinkPortal'
+import { CargaCSVComisionados } from './CargaCSV'
 
 export default async function ComisionadosPage() {
   const supabase = await createClient()
@@ -116,6 +117,12 @@ export default async function ComisionadosPage() {
           </form>
         )}
       </div>
+
+      {sociedades.length > 0 && (
+        <div className="max-w-2xl">
+          <CargaCSVComisionados sociedad_id={sociedades[0].id_sociedad} />
+        </div>
+      )}
     </div>
   )
 }

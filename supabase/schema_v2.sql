@@ -194,9 +194,11 @@ returns boolean language sql security definer stable as $$
 $$;
 
 -- Admin del tenant tiene acceso implícito a todas sus sociedades
+-- plpgsql (no sql) para diferir la validación de 'sociedades' al momento de ejecución
 create or replace function es_miembro_sociedad(p_sociedad uuid)
-returns boolean language sql security definer stable as $$
-  select exists (
+returns boolean language plpgsql security definer stable as $$
+begin
+  return exists (
     select 1 from usuario_tenant ut
     join sociedades s on s.tenant_id = ut.tenant_id
     where s.id_sociedad = p_sociedad
@@ -206,13 +208,15 @@ returns boolean language sql security definer stable as $$
   ) or exists (
     select 1 from usuario_permiso_sociedad
     where usuario_id = auth.uid() and sociedad_id = p_sociedad
-  )
+  );
+end;
 $$;
 
 -- Admin tiene todos los permisos operacionales implícitamente
 create or replace function tiene_permiso_en_sociedad(p_sociedad uuid, p_permisos permiso_operacional[])
-returns boolean language sql security definer stable as $$
-  select exists (
+returns boolean language plpgsql security definer stable as $$
+begin
+  return exists (
     select 1 from usuario_tenant ut
     join sociedades s on s.tenant_id = ut.tenant_id
     where s.id_sociedad = p_sociedad
@@ -224,7 +228,8 @@ returns boolean language sql security definer stable as $$
     where usuario_id = auth.uid()
       and sociedad_id = p_sociedad
       and permiso = any(p_permisos)
-  )
+  );
+end;
 $$;
 
 -- ============================================================

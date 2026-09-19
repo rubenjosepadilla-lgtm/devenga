@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   LogOut, LayoutDashboard, Building2, Users, FileText, Target,
-  Megaphone, Upload, CalendarClock, MessageSquareWarning,
+  Megaphone, Upload, CalendarClock, MessageSquareWarning, UserCheck, BarChart2,
 } from 'lucide-react'
 import { tenantDelUsuario } from '@/lib/datos/tenant'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
@@ -28,6 +28,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: '/dashboard/transacciones', icon: Upload, label: 'Transacciones' },
     { href: '/dashboard/periodos', icon: CalendarClock, label: 'Períodos' },
     { href: '/dashboard/disputas', icon: MessageSquareWarning, label: 'Disputas' },
+    { href: '/dashboard/equipo', icon: UserCheck, label: 'Equipo' },
+    { href: '/dashboard/reportes', icon: BarChart2, label: 'Reportes' },
   ]
 
   return (
