@@ -16,27 +16,20 @@ export async function tenantDelUsuario(): Promise<TenantConRol | null> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
-    const { data: membership, error: errMembr } = await supabase
-      .from('usuario_tenant')
-      .select('tenant_id, rol_base')
-      .eq('usuario_id', user.id)
-      .eq('activo', true)
-      .limit(1)
-      .maybeSingle()
+    const { data, error } = await supabase.rpc('obtener_mi_tenant')
+    if (error || !data) return null
 
-    if (errMembr || !membership) return null
-
-    const { data: tenant, error: errTenant } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('id_tenant', membership.tenant_id)
-      .maybeSingle()
-
-    if (errTenant || !tenant) return null
-
+    const row = data as Record<string, unknown>
     return {
-      tenant: tenant as unknown as Tenant,
-      rol_base: membership.rol_base as RolBaseTenant,
+      tenant: {
+        id_tenant: row.id_tenant,
+        nombre_comercial: row.nombre_comercial,
+        pais_base: row.pais_base,
+        dominio_personalizado: row.dominio_personalizado ?? null,
+        logo_principal: row.logo_principal ?? null,
+        color_primario: row.color_primario ?? null,
+      } as Tenant,
+      rol_base: row.rol_base as RolBaseTenant,
     }
   } catch {
     return null
