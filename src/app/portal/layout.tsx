@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Home, MessageSquareWarning } from 'lucide-react'
+import { LogOut, Home, MessageSquareWarning, FileText, Calculator } from 'lucide-react'
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -18,6 +18,8 @@ export default async function PortalLayout({ children }: { children: React.React
           {comisionado && (
             <div className="flex gap-4 text-sm text-gray-600">
               <Link href="/portal" className="flex items-center gap-1 hover:text-gray-900"><Home size={14} /> Inicio</Link>
+              <Link href="/portal/planes" className="flex items-center gap-1 hover:text-gray-900"><FileText size={14} /> Mi plan</Link>
+              <Link href="/portal/simulador" className="flex items-center gap-1 hover:text-gray-900"><Calculator size={14} /> Simulador</Link>
               <Link href="/portal/disputas" className="flex items-center gap-1 hover:text-gray-900"><MessageSquareWarning size={14} /> Disputas</Link>
             </div>
           )}

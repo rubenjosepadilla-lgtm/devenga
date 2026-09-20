@@ -9,6 +9,12 @@ export default async function PeriodoDetallePage({ params }: { params: Promise<{
   const { data: periodo } = await supabase.from('periodos').select('*, sociedades(nombre, pais)').eq('id', id).single()
   if (!periodo) return <p className="text-gray-400">Período no encontrado.</p>
 
+  const { data: aprobaciones } = await supabase
+    .from('aprobaciones_periodo')
+    .select('*')
+    .eq('periodo_id', id)
+    .order('created_at', { ascending: true })
+
   const { data: resultados } = await supabase
     .from('resultados_calculo')
     .select('*, comisionados(identificador_personal)')
@@ -36,7 +42,7 @@ export default async function PeriodoDetallePage({ params }: { params: Promise<{
         )}
       </div>
 
-      <AccionesPeriodo periodoId={id} estado={periodo.estado} />
+      <AccionesPeriodo periodoId={id} estado={periodo.estado} aprobaciones={aprobaciones ?? []} />
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8">
         <div className="px-4 py-3 border-b border-gray-100 text-sm font-semibold text-gray-900">Resultados de cálculo</div>
