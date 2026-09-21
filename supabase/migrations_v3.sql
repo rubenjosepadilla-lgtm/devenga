@@ -273,9 +273,18 @@ create policy "territorios_update" on territorios for update
   using (tiene_rol_base(tenant_id, array['administrador']));
 
 -- FK diferida: transacciones → territorios
-alter table transacciones
-  add constraint if not exists fk_tx_territorio
-  foreign key (territorio_id) references territorios(id_territorio);
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.table_constraints
+    where constraint_name = 'fk_tx_territorio' and table_name = 'transacciones'
+  ) then
+    alter table transacciones
+      add constraint fk_tx_territorio
+      foreign key (territorio_id) references territorios(id_territorio);
+  end if;
+end;
+$$;
 
 -- ============================================================
 -- 3. TRIGGERS DE AUDIT_LOG
