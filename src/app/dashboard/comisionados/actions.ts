@@ -20,11 +20,23 @@ export async function crearComisionadoConVinculo(formData: FormData) {
   // Si se proporcionó email, invitar al usuario y obtener su user_id
   let usuario_id: string | null = null
   if (email) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://devenga.vercel.app'
     const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('.supabase.co', '.vercel.app')}/portal`,
+      redirectTo: `${appUrl}/portal`,
     })
-    if (inviteError) throw new Error(`Error al invitar usuario: ${inviteError.message}`)
-    usuario_id = inviteData.user.id
+    if (inviteError) {
+      // Si ya existe, buscar el user_id por email en lugar de fallar
+      if (inviteError.message.toLowerCase().includes('already') || inviteError.status === 422) {
+        const { data: listData } = await admin.auth.admin.listUsers()
+        const existing = listData?.users?.find((u) => u.email === email)
+        if (existing) usuario_id = existing.id
+        // Si no encontramos el usuario existente, continuamos sin vincular
+      } else {
+        throw new Error(`Error al invitar usuario: ${inviteError.message}`)
+      }
+    } else {
+      usuario_id = inviteData.user.id
+    }
   }
 
   const { error } = await supabase.rpc('crear_comisionado_con_vinculo', {
