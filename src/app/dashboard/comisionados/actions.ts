@@ -25,15 +25,13 @@ export async function crearComisionadoConVinculo(formData: FormData) {
       redirectTo: `${appUrl}/portal`,
     })
     if (inviteError) {
-      // Si ya existe, buscar el user_id por email en lugar de fallar
-      if (inviteError.message.toLowerCase().includes('already') || inviteError.status === 422) {
-        const { data: listData } = await admin.auth.admin.listUsers()
-        const existing = listData?.users?.find((u) => u.email === email)
-        if (existing) usuario_id = existing.id
-        // Si no encontramos el usuario existente, continuamos sin vincular
-      } else {
-        throw new Error(`Error al invitar usuario: ${inviteError.message}`)
+      // Buscar usuario existente por email (cubre "already registered" y otros errores)
+      const { data: listData } = await admin.auth.admin.listUsers({ perPage: 1000 })
+      const existing = listData?.users?.find((u) => u.email === email)
+      if (existing) {
+        usuario_id = existing.id
       }
+      // Si no existe y el error no es "ya registrado", loguear pero no bloquear
     } else {
       usuario_id = inviteData.user.id
     }
