@@ -37,7 +37,7 @@ export default async function ComisionadosPage() {
               <th className="px-4 py-3 font-medium">Sociedad</th>
               <th className="px-4 py-3 font-medium">ID en nómina</th>
               <th className="px-4 py-3 font-medium">Rol comercial</th>
-              <th className="px-4 py-3 font-medium">Portal</th>
+              <th className="px-4 py-3 font-medium">Acceso portal</th>
             </tr>
           </thead>
           <tbody>
@@ -50,7 +50,11 @@ export default async function ComisionadosPage() {
                 <td className="px-4 py-3 text-gray-500">{v.sociedades?.nombre}</td>
                 <td className="px-4 py-3 text-gray-500">{v.id_en_nomina}</td>
                 <td className="px-4 py-3 text-gray-500">{v.rol_comercial ?? '—'}</td>
-                <td className="px-4 py-3"><VincularUsuario comisionadoId={v.comisionados?.id_comisionado} vinculado={!!v.comisionados?.usuario_id} /></td>
+                <td className="px-4 py-3">
+                  {v.comisionados?.usuario_id
+                    ? <span className="text-xs text-green-600 font-medium">✓ Vinculado</span>
+                    : <span className="text-xs text-gray-400">Sin cuenta</span>}
+                </td>
               </tr>
             ))}
             {(vinculos ?? []).length === 0 && (
@@ -111,8 +115,13 @@ export default async function ComisionadosPage() {
               <label className="text-sm font-medium text-gray-700">Centro de costo</label>
               <input name="centro_costo" className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
             </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Email del comisionado</label>
+              <input type="email" name="email" placeholder="vendedor@empresa.com" className="mt-1 w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
+              <p className="text-xs text-gray-400 mt-1">Se enviará una invitación para que establezca su contraseña y acceda al portal.</p>
+            </div>
             <button type="submit" className="bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-violet-800">
-              Crear comisionado
+              Crear comisionado y enviar invitación
             </button>
           </form>
         )}
