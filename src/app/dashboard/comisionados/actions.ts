@@ -4,15 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { tenantDelUsuario } from '@/lib/datos/tenant'
 import { revalidatePath } from 'next/cache'
 
-/**
- * Crea el comisionado y su vínculo a una sociedad en la misma operación.
- * El id se genera aquí para evitar depender del RETURNING implícito tras el INSERT
- * (antes del vínculo, ninguna política RLS de SELECT aplica a la fila recién insertada).
- */
 export async function crearComisionadoConVinculo(formData: FormData) {
   const supabase = await createClient()
-  const ctx = await tenantDelUsuario()
-  if (!ctx) throw new Error('Sin workspace activo')
 
   const pais = formData.get('pais') as string
   const identificador_personal = formData.get('identificador_personal') as string
@@ -23,27 +16,18 @@ export async function crearComisionadoConVinculo(formData: FormData) {
   const centro_costo = (formData.get('centro_costo') as string) || null
   const rol_comercial = (formData.get('rol_comercial') as string) || null
 
-  const id_comisionado = randomUUID()
-
-  const { error: errorComisionado } = await supabase
-    .from('comisionados')
-    .insert({ id_comisionado, tenant_id: ctx.tenant.id_tenant, pais, identificador_personal, tipo, vigencia_desde })
-
-  if (errorComisionado) throw new Error(errorComisionado.message)
-
-  const { error: errorVinculo } = await supabase.from('comisionado_sociedad').insert({
-    comisionado_id: id_comisionado,
-    sociedad_id,
-    desde: vigencia_desde,
-    id_en_nomina,
-    centro_costo,
-    rol_comercial,
+  const { error } = await supabase.rpc('crear_comisionado_con_vinculo', {
+    p_pais: pais,
+    p_identificador_personal: identificador_personal,
+    p_tipo: tipo,
+    p_vigencia_desde: vigencia_desde,
+    p_sociedad_id: sociedad_id,
+    p_id_en_nomina: id_en_nomina,
+    p_centro_costo: centro_costo,
+    p_rol_comercial: rol_comercial,
   })
 
-  if (errorVinculo) {
-    await supabase.from('comisionados').delete().eq('id_comisionado', id_comisionado)
-    throw new Error(errorVinculo.message)
-  }
+  if (error) throw new Error(error.message)
 
   revalidatePath('/dashboard/comisionados')
 }
