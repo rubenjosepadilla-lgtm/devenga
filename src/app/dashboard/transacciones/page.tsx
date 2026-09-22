@@ -61,7 +61,7 @@ export default async function TransaccionesPage() {
               <tr key={t.id_transaccion} className="border-t border-gray-100">
                 <td className="px-4 py-3 text-gray-900">{t.fecha_hecho}</td>
                 <td className="px-4 py-3 text-gray-500">{t.tipo_evento}</td>
-                <td className="px-4 py-3 text-gray-500">{t.monto_bruto.toLocaleString('es-CL')} {t.moneda}</td>
+                <td className="px-4 py-3 text-gray-500">{(t.monto_bruto ?? 0).toLocaleString('es-CL')} {t.moneda}</td>
                 <td className="px-4 py-3 text-gray-500">{t.estado}</td>
               </tr>
             ))}

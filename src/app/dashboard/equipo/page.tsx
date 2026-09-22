@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { tenantDelUsuario } from '@/lib/datos/tenant'
 import { cambiarRol, toggleActivo } from './actions'
 
@@ -14,15 +15,21 @@ export default async function EquipoPage() {
     .eq('tenant_id', ctx.tenant.id_tenant)
     .order('created_at', { ascending: true })
 
-  // Leer emails de usuarios_app para los IDs encontrados
+  // Leer emails de auth.users via admin client
   const ids = (miembros ?? []).map((m) => m.usuario_id)
-  let perfiles: { id: string; nombre: string; email: string }[] = []
+  const perfilMap: Record<string, { nombre: string; email: string }> = {}
   if (ids.length) {
-    const { data } = await supabase.from('usuarios_app').select('id, nombre, email').in('id', ids)
-    perfiles = (data ?? []) as { id: string; nombre: string; email: string }[]
+    const admin = createAdminClient()
+    const { data: { users } } = await admin.auth.admin.listUsers({ perPage: 1000 })
+    for (const u of users) {
+      if (ids.includes(u.id)) {
+        perfilMap[u.id] = {
+          email: u.email ?? '',
+          nombre: (u.user_metadata?.nombre ?? u.user_metadata?.full_name ?? '') as string,
+        }
+      }
+    }
   }
-
-  const perfilMap = Object.fromEntries(perfiles.map((p) => [p.id, p]))
 
   const esAdmin = ctx.rol_base === 'administrador'
 

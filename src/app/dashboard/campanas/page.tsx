@@ -21,7 +21,7 @@ export default async function CampanasPage() {
               <div>
                 <p className="font-medium text-gray-900">{c.concepto_codigo} · {c.multiplicador ? `x${c.multiplicador}` : `+${c.monto}`}</p>
                 <p className="text-xs text-gray-400">
-                  {c.vigencia_hecho_desde} → {c.vigencia_hecho_hasta} · alcance: {c.alcance_retroactivo} · tope: {c.presupuesto_tope.toLocaleString('es-CL')} · estado: <strong>{c.estado}</strong>
+                  {c.vigencia_hecho_desde} → {c.vigencia_hecho_hasta} · alcance: {c.alcance_retroactivo} · tope: {c.presupuesto_tope != null ? c.presupuesto_tope.toLocaleString('es-CL') : '—'} · estado: <strong>{c.estado}</strong>
                 </p>
               </div>
             </div>

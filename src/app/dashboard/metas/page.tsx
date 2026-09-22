@@ -38,7 +38,7 @@ export default async function MetasPage() {
             {(metas ?? []).map((m: any) => (
               <tr key={m.id_meta} className="border-t border-gray-100">
                 <td className="px-4 py-3 text-gray-500">{m.sociedades?.nombre}</td>
-                <td className="px-4 py-3 text-gray-900">{m.destino_tipo}: {m.destino_id.slice(0, 8)}…</td>
+                <td className="px-4 py-3 text-gray-900">{m.destino_tipo}: {(m.destino_id ?? '').slice(0, 8) || '—'}…</td>
                 <td className="px-4 py-3 text-gray-500">{m.periodo}</td>
                 <td className="px-4 py-3 text-gray-500">{m.magnitud} {m.unidad}</td>
                 <td className="px-4 py-3 text-gray-500">v{m.version}{m.motivo_version ? ` — ${m.motivo_version}` : ''}</td>

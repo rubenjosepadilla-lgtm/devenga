@@ -59,9 +59,9 @@ export default async function PeriodoDetallePage({ params }: { params: Promise<{
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {(resultados ?? []).map((r: any) => (
               <tr key={r.id_resultado} className="border-t border-gray-100">
-                <td className="px-4 py-3 text-gray-900">{r.comisionados?.identificador_personal ?? r.comisionado_id.slice(0, 8)}</td>
+                <td className="px-4 py-3 text-gray-900">{r.comisionados?.identificador_personal ?? (r.comisionado_id ?? '').slice(0, 8)}</td>
                 <td className="px-4 py-3 text-gray-500">{r.concepto_codigo}</td>
-                <td className="px-4 py-3 text-gray-500">{r.importe.toLocaleString('es-CL')} {r.moneda}</td>
+                <td className="px-4 py-3 text-gray-500">{(r.importe ?? 0).toLocaleString('es-CL')} {r.moneda}</td>
                 <td className="px-4 py-3 text-gray-500">{r.estado}</td>
               </tr>
             ))}
@@ -91,7 +91,7 @@ export default async function PeriodoDetallePage({ params }: { params: Promise<{
               {(movimientos ?? []).map((m: any) => (
                 <tr key={m.id_movimiento} className="border-t border-gray-100">
                   <td className="px-4 py-3 text-gray-900">{m.concepto}</td>
-                  <td className="px-4 py-3 text-gray-500">{m.importe.toLocaleString('es-CL')} {m.moneda}</td>
+                  <td className="px-4 py-3 text-gray-500">{(m.importe ?? 0).toLocaleString('es-CL')} {m.moneda}</td>
                   <td className="px-4 py-3 text-gray-500">{m.devengo_diario ? 'sí' : 'no'}</td>
                   <td className="px-4 py-3 text-gray-500">{(m.incide_en ?? []).join(', ')}</td>
                   <td className="px-4 py-3 text-gray-500">{m.estado}</td>
