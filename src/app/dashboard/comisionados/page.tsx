@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { PAISES_V1 } from '@/lib/dominio/tipos'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
-import { crearComisionadoConVinculo } from './actions'
+import { crearComisionadoConVinculo, eliminarComisionado } from './actions'
 import { VincularUsuario } from './VincularUsuario'
 import { CopiarLinkPortal } from './CopiarLinkPortal'
 import { CargaCSVComisionados } from './CargaCSV'
@@ -38,6 +38,7 @@ export default async function ComisionadosPage() {
               <th className="px-4 py-3 font-medium">ID en nómina</th>
               <th className="px-4 py-3 font-medium">Rol comercial</th>
               <th className="px-4 py-3 font-medium">Acceso portal</th>
+              <th className="px-4 py-3 font-medium"></th>
             </tr>
           </thead>
           <tbody>
@@ -55,10 +56,16 @@ export default async function ComisionadosPage() {
                     ? <span className="text-xs text-green-600 font-medium">✓ Vinculado</span>
                     : <span className="text-xs text-gray-400">Sin cuenta</span>}
                 </td>
+                <td className="px-4 py-3">
+                  <form action={eliminarComisionado} onSubmit={(e) => { if (!confirm('¿Eliminar este comisionado?')) e.preventDefault() }}>
+                    <input type="hidden" name="comisionado_id" value={v.comisionados?.id_comisionado} />
+                    <button type="submit" className="text-xs text-red-500 hover:text-red-700">Eliminar</button>
+                  </form>
+                </td>
               </tr>
             ))}
             {(vinculos ?? []).length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-400">Aún no hay comisionados.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-gray-400">Aún no hay comisionados.</td></tr>
             )}
           </tbody>
         </table>

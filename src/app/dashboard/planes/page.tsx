@@ -31,7 +31,7 @@ export default async function PlanesPage() {
               </div>
               {p.estado === 'borrador' && (
                 <form action={aprobarPlantilla}>
-                  <input type="hidden" name="plantilla_id" value={p.id} />
+                  <input type="hidden" name="plantilla_id" value={p.id_plantilla} />
                   <button type="submit" className="text-xs bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-800">
                     Aprobar (puerta 1)
                   </button>
@@ -63,7 +63,7 @@ export default async function PlanesPage() {
             <details className="text-sm">
               <summary className="text-violet-700 cursor-pointer">+ agregar componente</summary>
               <form action={crearComponente} className="grid grid-cols-2 gap-3 mt-3">
-                <input type="hidden" name="plantilla_id" value={p.id} />
+                <input type="hidden" name="plantilla_id" value={p.id_plantilla} />
                 <select name="tipo" required className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
                   <option value="tasa_lineal">Tasa lineal</option>
                   <option value="escalonado_marginal">Escalonado marginal</option>
@@ -107,7 +107,7 @@ export default async function PlanesPage() {
             <details className="text-sm mt-1">
               <summary className="text-violet-700 cursor-pointer">+ asignar a un comisionado</summary>
               <form action={crearAsignacion} className="grid grid-cols-2 gap-3 mt-3">
-                <input type="hidden" name="plantilla_id" value={p.id} />
+                <input type="hidden" name="plantilla_id" value={p.id_plantilla} />
                 <input type="hidden" name="destino_tipo" value="comisionado" />
                 <select name="destino_id" required className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

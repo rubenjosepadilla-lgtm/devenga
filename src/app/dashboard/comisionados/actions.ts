@@ -54,6 +54,15 @@ export async function crearComisionadoConVinculo(formData: FormData) {
   revalidatePath('/dashboard/comisionados')
 }
 
+export async function eliminarComisionado(formData: FormData) {
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('eliminar_comisionado', {
+    p_comisionado_id: formData.get('comisionado_id') as string,
+  })
+  if (error) throw new Error(error.message)
+  revalidatePath('/dashboard/comisionados')
+}
+
 export async function cargaMasivaComisionados(formData: FormData) {
   const supabase = await createClient()
   const admin = createAdminClient()
