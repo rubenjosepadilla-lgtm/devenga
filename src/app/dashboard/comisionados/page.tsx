@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { PAISES_V1 } from '@/lib/dominio/tipos'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
-import { crearComisionadoConVinculo, eliminarComisionado } from './actions'
-import { VincularUsuario } from './VincularUsuario'
+import { crearComisionadoConVinculo } from './actions'
+import { EliminarBtn } from './EliminarBtn'
 import { CopiarLinkPortal } from './CopiarLinkPortal'
 import { CargaCSVComisionados } from './CargaCSV'
 
@@ -57,10 +57,9 @@ export default async function ComisionadosPage() {
                     : <span className="text-xs text-gray-400">Sin cuenta</span>}
                 </td>
                 <td className="px-4 py-3">
-                  <form action={eliminarComisionado} onSubmit={(e) => { if (!confirm('¿Eliminar este comisionado?')) e.preventDefault() }}>
-                    <input type="hidden" name="comisionado_id" value={v.comisionados?.id_comisionado} />
-                    <button type="submit" className="text-xs text-red-500 hover:text-red-700">Eliminar</button>
-                  </form>
+                  {v.comisionados?.id_comisionado && (
+                    <EliminarBtn comisionadoId={v.comisionados.id_comisionado} />
+                  )}
                 </td>
               </tr>
             ))}
