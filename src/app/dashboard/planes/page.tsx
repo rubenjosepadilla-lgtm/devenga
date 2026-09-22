@@ -23,7 +23,7 @@ export default async function PlanesPage() {
 
       <div className="space-y-4 mb-8">
         {(plantillas ?? []).map((p) => (
-          <div key={p.id} className="bg-white rounded-2xl border border-gray-100 p-6">
+          <div key={p.id_plantilla} className="bg-white rounded-2xl border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="font-semibold text-gray-900">{p.nombre}</h3>
@@ -102,7 +102,7 @@ export default async function PlanesPage() {
 
             <div className="mt-3 text-xs text-gray-500">
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {(p.asignaciones_plan ?? []).length} asignación(es): {(p.asignaciones_plan ?? []).map((a: any) => `${a.destino_tipo}:${a.destino_id.slice(0, 8)}…`).join(', ')}
+              {(p.asignaciones_plan ?? []).length} asignación(es): {(p.asignaciones_plan ?? []).map((a: any) => (a.comisionado_id ?? a.destino_id ?? '').slice(0, 8) + '…').join(', ')}
             </div>
             <details className="text-sm mt-1">
               <summary className="text-violet-700 cursor-pointer">+ asignar a un comisionado</summary>
