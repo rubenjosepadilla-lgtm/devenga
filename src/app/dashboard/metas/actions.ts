@@ -1,19 +1,27 @@
 'use server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/auth'
+import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 export async function crearMeta(formData: FormData) {
-  const supabase = await createClient()
-  const { error } = await supabase.rpc('crear_meta', {
-    p_sociedad_id: formData.get('sociedad_id') as string,
-    p_concepto_codigo: formData.get('concepto_codigo') as string,
-    p_pais: formData.get('pais') as string,
-    p_periodo: formData.get('periodo') as string,
-    p_destino_tipo: formData.get('destino_tipo') as string,
-    p_destino_id: formData.get('destino_id') as string,
-    p_magnitud: Number(formData.get('magnitud')),
-    p_unidad: (formData.get('unidad') as string) || 'CLP',
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('No autenticado')
+  const tenantId = (session as any).tenantId as string | undefined
+  if (!tenantId) throw new Error('Sin tenant')
+
+  const sociedadId = formData.get('sociedad_id') as string | null
+
+  await db.meta.create({
+    data: {
+      tenantId,
+      sociedadId: sociedadId || undefined,
+      nombre: formData.get('nombre') as string,
+      tipo: formData.get('tipo') as string | undefined,
+      valorObjetivo: formData.get('valor_objetivo') ? Number(formData.get('valor_objetivo')) : undefined,
+      periodoInicio: formData.get('periodo_inicio') ? new Date(formData.get('periodo_inicio') as string) : undefined,
+      periodoFin: formData.get('periodo_fin') ? new Date(formData.get('periodo_fin') as string) : undefined,
+    },
   })
-  if (error) throw new Error(error.message)
+
   revalidatePath('/dashboard/metas')
 }

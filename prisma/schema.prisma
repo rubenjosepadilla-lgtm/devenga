@@ -1,0 +1,872 @@
+// Prisma schema — Devenga (migrated from Supabase to Azure PostgreSQL)
+// Replaces auth.users with usuarios table (own auth via NextAuth)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// AUTH — Own users table (replaces auth.users)
+// ============================================================
+
+model usuarios {
+  id                 String    @id @default(uuid()) @db.Uuid
+  email              String    @unique
+  password_hash      String?
+  nombre             String
+  email_verified_at  DateTime? @db.Timestamptz
+  invited_by         String?   @db.Uuid
+  invitation_token   String?   @unique
+  created_at         DateTime  @default(now()) @db.Timestamptz
+
+  // Relations
+  usuario_tenant        usuario_tenant[]
+  usuario_permiso_sociedad usuario_permiso_sociedad[]
+  jefe_nodo             jefe_nodo[]
+  comisionados          comisionados[]
+  notificaciones        notificaciones[]
+}
+
+// ============================================================
+// GLOBAL CATALOGS
+// ============================================================
+
+model paises {
+  codigo_pais          String   @id
+  nombre               String
+  moneda_funcional     String
+  regimen_legal_version String  @default("1.0")
+  estado               String   @default("activo")
+
+  // Relations
+  tenants              tenants[]
+  conceptos            conceptos[]
+  sociedades           sociedades[]
+  comisionados         comisionados[]
+  metas                metas[]
+  matriz_legal_pais    matriz_legal_pais[]
+}
+
+model matriz_legal_pais {
+  id            String   @id @default(uuid()) @db.Uuid
+  codigo_pais   String
+  concepto_tipo String
+  evento_devengo String
+  devengo_diario Boolean @default(false)
+  confianza     String
+  notas         String?
+
+  paises        paises   @relation(fields: [codigo_pais], references: [codigo_pais])
+  incidencias   matriz_legal_incidencia[]
+}
+
+model matriz_legal_incidencia {
+  id         String @id @default(uuid()) @db.Uuid
+  matriz_id  String @db.Uuid
+  incidencia String
+
+  matriz     matriz_legal_pais @relation(fields: [matriz_id], references: [id], onDelete: Cascade)
+}
+
+model tipos_cambio {
+  id              String   @id @default(uuid()) @db.Uuid
+  moneda_origen   String
+  moneda_destino  String
+  periodo         String
+  tasa            Decimal
+  created_at      DateTime @default(now()) @db.Timestamptz
+
+  @@unique([moneda_origen, moneda_destino, periodo])
+}
+
+model puertas_aprobacion {
+  numero      Int    @id
+  nombre      String
+  descripcion String?
+
+  aprobaciones_periodo aprobaciones_periodo[]
+}
+
+model controles_bloqueantes {
+  numero      Int    @id
+  nombre      String
+  descripcion String?
+}
+
+model segregacion_funciones {
+  id              String  @id @default(uuid()) @db.Uuid
+  rol_que_no_puede String
+  accion_bloqueada String
+  motivo          String?
+}
+
+// ============================================================
+// TENANTS
+// ============================================================
+
+model tenants {
+  id_tenant              String    @id @default(uuid()) @db.Uuid
+  nombre_comercial       String
+  dominio_personalizado  String?   @unique
+  logo_principal         String?
+  logo_reducido          String?
+  color_primario         String    @default("#7c3aed")
+  color_secundario       String    @default("#6d28d9")
+  color_acento           String    @default("#a78bfa")
+  tipografia             String?
+  paleta_email           Json?
+  pie_legal_email        String?
+  terminos_uso_url       String?
+  politica_privacidad_url String?
+  estado                 String    @default("en_configuracion")
+  fecha_activacion       DateTime? @db.Date
+  pais_base              String
+  zona_horaria           String    @default("America/Santiago")
+  created_at             DateTime  @default(now()) @db.Timestamptz
+
+  // Relations
+  paises                 paises    @relation(fields: [pais_base], references: [codigo_pais])
+  usuario_tenant         usuario_tenant[]
+  conceptos              conceptos[]
+  sociedades             sociedades[]
+  comisionados           comisionados[]
+  nodos_jerarquia        nodos_jerarquia[]
+  jefe_nodo              jefe_nodo[]
+  plantillas_plan        plantillas_plan[]
+  metas                  metas[]
+  campanas               campanas[]
+  fuentes                fuentes[]
+  transacciones          transacciones[]
+  periodos               periodos[]
+  creditos               creditos[]
+  resultados_calculo     resultados_calculo[]
+  movimientos_devengo    movimientos_devengo[]
+  acuses_nomina          acuses_nomina[]
+  disputas               disputas[]
+  integraciones          integraciones[]
+  territorios            territorios[]
+  notificaciones         notificaciones[]
+  aprobaciones_periodo   aprobaciones_periodo[]
+}
+
+// ============================================================
+// RBAC
+// ============================================================
+
+model usuario_tenant {
+  id          String   @id @default(uuid()) @db.Uuid
+  usuario_id  String   @db.Uuid
+  tenant_id   String   @db.Uuid
+  rol_base    String   @default("administrador")
+  activo      Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  usuarios    usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  tenants     tenants  @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+
+  @@unique([usuario_id, tenant_id])
+}
+
+model usuario_permiso_sociedad {
+  id          String   @id @default(uuid()) @db.Uuid
+  usuario_id  String   @db.Uuid
+  sociedad_id String   @db.Uuid
+  permiso     String
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  usuarios    usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  sociedades  sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+
+  @@unique([usuario_id, sociedad_id, permiso])
+}
+
+model jefe_nodo {
+  id          String   @id @default(uuid()) @db.Uuid
+  usuario_id  String   @db.Uuid
+  tenant_id   String   @db.Uuid
+  nodo_id     String   @db.Uuid
+  desde       DateTime @db.Date
+  hasta       DateTime? @db.Date
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  usuarios    usuarios        @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  tenants     tenants         @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  nodos       nodos_jerarquia @relation(fields: [nodo_id], references: [id_nodo], onDelete: Cascade)
+}
+
+// ============================================================
+// CONCEPTOS
+// ============================================================
+
+model conceptos {
+  id                        String    @id @default(uuid()) @db.Uuid
+  tenant_id                 String    @db.Uuid
+  pais                      String
+  codigo                    String
+  nombre                    String
+  tipo                      String
+  devengo_diario            Boolean   @default(false)
+  fundamento_devengo_diario String?
+  evento_devengo            String
+  incide_en                 String[]  @default([])
+  tope_concepto             Decimal?
+  vigencia_desde            DateTime  @db.Date
+  vigencia_hasta            DateTime? @db.Date
+  principalidad             String    @default("principal")
+  ordinariedad              String    @default("ordinario")
+  created_at                DateTime  @default(now()) @db.Timestamptz
+
+  tenants   tenants @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  paises    paises  @relation(fields: [pais], references: [codigo_pais])
+
+  @@unique([tenant_id, pais, codigo])
+}
+
+// ============================================================
+// SOCIEDADES
+// ============================================================
+
+model sociedades {
+  id_sociedad          String   @id @default(uuid()) @db.Uuid
+  tenant_id            String   @db.Uuid
+  pais                 String
+  nombre               String
+  identificador_fiscal String?
+  sistema_nomina       String?
+  modo_integracion     String   @default("manual")
+  created_at           DateTime @default(now()) @db.Timestamptz
+
+  tenants              tenants  @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  paises               paises   @relation(fields: [pais], references: [codigo_pais])
+
+  usuario_permiso_sociedad usuario_permiso_sociedad[]
+  comisionado_sociedad     comisionado_sociedad[]
+  nodos_jerarquia          nodos_jerarquia[]
+  plantillas_plan          plantillas_plan[]
+  metas                    metas[]
+  campanas                 campanas[]
+  fuentes                  fuentes[]
+  transacciones            transacciones[]
+  periodos                 periodos[]
+  resultados_calculo       resultados_calculo[]
+  movimientos_devengo      movimientos_devengo[]
+  disputas                 disputas[]
+  integraciones            integraciones[]
+  territorios_fk           territorios[]
+
+  @@unique([tenant_id, pais, identificador_fiscal])
+}
+
+// ============================================================
+// COMISIONADOS
+// ============================================================
+
+model comisionados {
+  id_comisionado        String    @id @default(uuid()) @db.Uuid
+  tenant_id             String    @db.Uuid
+  pais                  String
+  identificador_personal String
+  tipo                  String
+  vigencia_desde        DateTime  @db.Date
+  usuario_id            String?   @db.Uuid
+  created_at            DateTime  @default(now()) @db.Timestamptz
+
+  tenants               tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  paises                paises    @relation(fields: [pais], references: [codigo_pais])
+  usuarios              usuarios? @relation(fields: [usuario_id], references: [id])
+
+  comisionado_sociedad  comisionado_sociedad[]
+  asignaciones_plan     asignaciones_plan[]
+  creditos              creditos[]
+  transaccion_splits    transaccion_splits[]
+  resultados_calculo    resultados_calculo[]
+  movimientos_devengo   movimientos_devengo[]
+  disputas              disputas[]
+  integracion_usuarios  integracion_usuarios[]
+  territorios_titular   territorios[]
+  acuses_plan           acuses_plan[]
+
+  @@unique([tenant_id, pais, identificador_personal])
+}
+
+model comisionado_sociedad {
+  id             String    @id @default(uuid()) @db.Uuid
+  comisionado_id String    @db.Uuid
+  sociedad_id    String    @db.Uuid
+  desde          DateTime  @db.Date
+  hasta          DateTime? @db.Date
+  id_en_nomina   String?
+  centro_costo   String?
+  rol_comercial  String?
+  created_at     DateTime  @default(now()) @db.Timestamptz
+
+  comisionados   comisionados @relation(fields: [comisionado_id], references: [id_comisionado], onDelete: Cascade)
+  sociedades     sociedades   @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+
+  @@unique([comisionado_id, sociedad_id, desde])
+}
+
+// ============================================================
+// JERARQUÍA
+// ============================================================
+
+model nodos_jerarquia {
+  id_nodo       String    @id @default(uuid()) @db.Uuid
+  tenant_id     String    @db.Uuid
+  sociedad_id   String    @db.Uuid
+  nombre        String
+  nodo_padre    String?   @db.Uuid
+  vigencia_desde DateTime? @db.Date
+  vigencia_hasta DateTime? @db.Date
+  motivo_cambio String?
+  aprobado_por  String?   @db.Uuid
+  aprobado_en   DateTime? @db.Timestamptz
+  created_at    DateTime  @default(now()) @db.Timestamptz
+
+  tenants       tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades    sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+  padre         nodos_jerarquia?  @relation("NodoHijos", fields: [nodo_padre], references: [id_nodo])
+  hijos         nodos_jerarquia[] @relation("NodoHijos")
+  jefe_nodo     jefe_nodo[]
+}
+
+// ============================================================
+// PLANES
+// ============================================================
+
+model plantillas_plan {
+  id_plantilla  String    @id @default(uuid()) @db.Uuid
+  tenant_id     String    @db.Uuid
+  sociedad_id   String    @db.Uuid
+  pais          String
+  nombre        String
+  version       Int       @default(1)
+  estado        String    @default("borrador")
+  aprobado_por  String?   @db.Uuid
+  aprobado_en   DateTime? @db.Timestamptz
+  created_at    DateTime  @default(now()) @db.Timestamptz
+
+  tenants       tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades    sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+
+  componentes_plan  componentes_plan[]
+  asignaciones_plan asignaciones_plan[]
+}
+
+model componentes_plan {
+  id_componente   String    @id @default(uuid()) @db.Uuid
+  plantilla_id    String    @db.Uuid
+  concepto_codigo String
+  tipo_calculo    String
+  parametros      Json      @default("{}")
+  tope_componente Decimal?
+  orden           Int       @default(0)
+  created_at      DateTime  @default(now()) @db.Timestamptz
+
+  // Legacy columns (kept for older schemas)
+  tipo            String?
+  base_medicion   String?
+  tasa            Decimal?
+  regla_reparto   String?
+
+  plantillas_plan plantillas_plan @relation(fields: [plantilla_id], references: [id_plantilla], onDelete: Cascade)
+}
+
+model asignaciones_plan {
+  id_asignacion  String    @id @default(uuid()) @db.Uuid
+  plantilla_id   String    @db.Uuid
+  comisionado_id String    @db.Uuid
+  vigencia_desde DateTime  @db.Date
+  vigencia_hasta DateTime? @db.Date
+  created_at     DateTime  @default(now()) @db.Timestamptz
+
+  plantillas_plan plantillas_plan @relation(fields: [plantilla_id], references: [id_plantilla], onDelete: Cascade)
+  comisionados    comisionados    @relation(fields: [comisionado_id], references: [id_comisionado], onDelete: Cascade)
+  overrides_plan  overrides_plan[]
+  acuses_plan     acuses_plan[]
+}
+
+model overrides_plan {
+  id_override    String    @id @default(uuid()) @db.Uuid
+  asignacion_id  String    @db.Uuid
+  campo          String
+  valor_nuevo    Json
+  motivo         String
+  aprobado_por   String?   @db.Uuid
+  aprobado_en    DateTime? @db.Timestamptz
+  vigencia_desde DateTime  @db.Date
+  vigencia_hasta DateTime? @db.Date
+  created_at     DateTime  @default(now()) @db.Timestamptz
+
+  asignaciones_plan asignaciones_plan @relation(fields: [asignacion_id], references: [id_asignacion], onDelete: Cascade)
+}
+
+// ============================================================
+// METAS
+// ============================================================
+
+model metas {
+  id_meta        String    @id @default(uuid()) @db.Uuid
+  tenant_id      String    @db.Uuid
+  sociedad_id    String    @db.Uuid
+  concepto_codigo String
+  pais           String
+  periodo        String
+  destino_tipo   String
+  destino_id     String    @db.Uuid
+  magnitud       Decimal
+  unidad         String    @default("CLP")
+  estado         String    @default("borrador")
+  version        Int       @default(1)
+  motivo_version String?
+  cargada_por    String?
+  aprobada_por   String?
+  aprobada_en    DateTime? @db.Timestamptz
+  distribucion_tipo String?
+  peso_distribucion Decimal?
+  cuota_origen_nodo String? @db.Uuid
+  created_at     DateTime  @default(now()) @db.Timestamptz
+
+  tenants        tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades     sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+  paises         paises    @relation(fields: [pais], references: [codigo_pais])
+}
+
+// ============================================================
+// CAMPAÑAS
+// ============================================================
+
+model campanas {
+  id_campana                    String    @id @default(uuid()) @db.Uuid
+  tenant_id                     String    @db.Uuid
+  sociedad_id                   String    @db.Uuid
+  concepto_codigo               String
+  nombre                        String
+  tipo                          String
+  multiplicador                 Decimal?
+  monto                         Decimal?
+  vigencia_hecho_desde          DateTime  @db.Date
+  vigencia_hecho_hasta          DateTime  @db.Date
+  alcance_retroactivo           String    @default("desde_publicacion")
+  presupuesto_tope              Decimal?
+  estado                        String    @default("borrador")
+  autorizador                   String?
+  nivel_autorizacion            String?
+  autorizado_en                 DateTime? @db.Timestamptz
+  publicado_en                  DateTime? @db.Timestamptz
+  condicion_tipo                String?
+  excepcion_presupuesto_motivo  String?
+  excepcion_presupuesto_en      DateTime? @db.Timestamptz
+  created_at                    DateTime  @default(now()) @db.Timestamptz
+
+  tenants     tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades  sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+}
+
+// ============================================================
+// FUENTES Y TRANSACCIONES
+// ============================================================
+
+model fuentes {
+  id_fuente      String   @id @default(uuid()) @db.Uuid
+  tenant_id      String   @db.Uuid
+  sociedad_id    String   @db.Uuid
+  nombre         String
+  sistema_origen String?
+  mapeo_campos   Json     @default("{}")
+  activa         Boolean  @default(true)
+  politica_duplicados String @default("rechazar")
+  created_at     DateTime @default(now()) @db.Timestamptz
+
+  tenants        tenants  @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades     sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+  transacciones  transacciones[]
+  transacciones_cuarentena transacciones_cuarentena[]
+}
+
+model transacciones {
+  id_transaccion  String    @id @default(uuid()) @db.Uuid
+  tenant_id       String    @db.Uuid
+  sociedad_id     String    @db.Uuid
+  fuente_id       String?   @db.Uuid
+  pais            String?
+  fecha_hecho     DateTime  @db.Date
+  fecha_credito   DateTime? @db.Date
+  tipo_evento     String
+  cliente         String?
+  producto        String?
+  canal           String?
+  territorio      String?
+  territorio_id   String?   @db.Uuid
+  monto           Decimal
+  monto_bruto     Decimal?
+  monto_neto      Decimal?
+  margen          Decimal?
+  unidades        Decimal?
+  moneda          String    @default("CLP")
+  id_externo      String?
+  clave_natural   String
+  hash_origen     String?
+  metadatos       Json      @default("{}")
+  estado          String    @default("valida")
+  motivo_cuarentena String?
+  anulada_en      DateTime? @db.Timestamptz
+  created_at      DateTime  @default(now()) @db.Timestamptz
+
+  tenants         tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades      sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+  fuentes         fuentes?  @relation(fields: [fuente_id], references: [id_fuente])
+
+  transaccion_splits       transaccion_splits[]
+  transacciones_cuarentena transacciones_cuarentena[]
+  creditos                 creditos[]
+}
+
+model transaccion_splits {
+  id             String   @id @default(uuid()) @db.Uuid
+  transaccion_id String   @db.Uuid
+  comisionado_id String   @db.Uuid
+  porcentaje     Decimal
+  created_at     DateTime @default(now()) @db.Timestamptz
+
+  transacciones  transacciones @relation(fields: [transaccion_id], references: [id_transaccion], onDelete: Cascade)
+  comisionados   comisionados  @relation(fields: [comisionado_id], references: [id_comisionado])
+}
+
+model transacciones_cuarentena {
+  id             String    @id @default(uuid()) @db.Uuid
+  transaccion_id String?   @db.Uuid
+  fuente_id      String?   @db.Uuid
+  payload        Json?
+  motivo         String
+  resuelto       Boolean   @default(false)
+  resuelto_en    DateTime? @db.Timestamptz
+  created_at     DateTime  @default(now()) @db.Timestamptz
+
+  transacciones  transacciones? @relation(fields: [transaccion_id], references: [id_transaccion], onDelete: Cascade)
+  fuentes        fuentes?       @relation(fields: [fuente_id], references: [id_fuente])
+}
+
+// ============================================================
+// PERÍODOS, CRÉDITOS Y RESULTADOS
+// ============================================================
+
+model periodos {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenant_id       String    @db.Uuid
+  sociedad_id     String    @db.Uuid
+  periodo         String
+  estado          String    @default("abierto")
+  calculado_en    DateTime? @db.Timestamptz
+  congelado_en    DateTime? @db.Timestamptz
+  congelado_hash  String?
+  cerrado_en      DateTime? @db.Timestamptz
+  cerrado_por     String?
+  movimientos_generados Int @default(0)
+  created_at      DateTime  @default(now()) @db.Timestamptz
+
+  tenants         tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades      sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+
+  resultados_calculo   resultados_calculo[]
+  aprobaciones_periodo aprobaciones_periodo[]
+
+  @@unique([sociedad_id, periodo])
+}
+
+model creditos {
+  id_credito         String   @id @default(uuid()) @db.Uuid
+  tenant_id          String   @db.Uuid
+  transaccion_id     String   @db.Uuid
+  comisionado_id     String   @db.Uuid
+  concepto_codigo    String
+  fecha_credito      DateTime @db.Date
+  monto_atribuido    Decimal
+  moneda             String   @default("CLP")
+  porcentaje_atribuido Decimal?
+  porcentaje_split   Decimal?
+  nodo_id            String?  @db.Uuid
+  snapshot_jerarquia Json?
+  created_at         DateTime @default(now()) @db.Timestamptz
+
+  tenants        tenants      @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  transacciones  transacciones @relation(fields: [transaccion_id], references: [id_transaccion])
+  comisionados   comisionados  @relation(fields: [comisionado_id], references: [id_comisionado])
+}
+
+model resultados_calculo {
+  id_resultado   String    @id @default(uuid()) @db.Uuid
+  tenant_id      String    @db.Uuid
+  periodo_id     String    @db.Uuid
+  sociedad_id    String    @db.Uuid
+  comisionado_id String    @db.Uuid
+  concepto_codigo String
+  plantilla_id   String?   @db.Uuid
+  componente_id  String?   @db.Uuid
+  importe        Decimal   @default(0)
+  moneda         String    @default("CLP")
+  detalle_diario Json?
+  snapshot       Json?
+  estado         String    @default("preliminar")
+  id_movimiento  String?   @db.Uuid
+  created_at     DateTime  @default(now()) @db.Timestamptz
+
+  tenants        tenants    @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  periodos       periodos   @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
+  sociedades     sociedades @relation(fields: [sociedad_id], references: [id_sociedad])
+  comisionados   comisionados @relation(fields: [comisionado_id], references: [id_comisionado])
+  movimientos    movimientos_devengo? @relation(fields: [id_movimiento], references: [id_movimiento])
+}
+
+// ============================================================
+// MOVIMIENTOS DE DEVENGO
+// ============================================================
+
+model movimientos_devengo {
+  id_movimiento        String    @id @default(uuid()) @db.Uuid
+  tenant_id            String    @db.Uuid
+  sociedad             String    @db.Uuid
+  comisionado          String    @db.Uuid
+  concepto_codigo      String
+  periodo_origen       String
+  periodo_imputacion   String
+  importe_bruto        Decimal
+  importe              Decimal?
+  moneda               String    @default("CLP")
+  principalidad        String
+  ordinariedad         String
+  devengo_diario       Boolean   @default(false)
+  detalle_diario       Json?
+  incide_en            String[]  @default([])
+  remunerativo         Boolean?
+  estado               String    @default("enviado_a_nomina")
+  snapshot_reglas      Json?
+  snapshot_creditos    Json?
+  snapshot_aprobaciones Json?
+  url_documento        String?
+  hash_detalle         String?
+  created_at           DateTime  @default(now()) @db.Timestamptz
+
+  tenants              tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedad_rel         sociedades @relation(fields: [sociedad], references: [id_sociedad])
+  comisionado_rel      comisionados @relation(fields: [comisionado], references: [id_comisionado])
+
+  resultados_calculo   resultados_calculo[]
+  acuses_nomina        acuses_nomina[]
+}
+
+// ============================================================
+// ACUSES DE NÓMINA
+// ============================================================
+
+model acuses_nomina {
+  id_acuse           String   @id @default(uuid()) @db.Uuid
+  tenant_id          String   @db.Uuid
+  movimiento_id      String   @db.Uuid
+  id_movimiento      String?  @db.Uuid
+  fecha_acuse        DateTime @default(now()) @db.Timestamptz
+  monto_bruto_pagado Decimal
+  periodo_nomina     String
+  periodo_liquidado  String?
+  estado             String?
+  id_documento_publicado String?
+  declarado_no_confirmado Boolean @default(false)
+  acusado_por        String?  @db.Uuid
+  notas              String?
+  created_at         DateTime @default(now()) @db.Timestamptz
+
+  tenants            tenants  @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  movimientos        movimientos_devengo @relation(fields: [movimiento_id], references: [id_movimiento])
+}
+
+// ============================================================
+// DISPUTAS
+// ============================================================
+
+model disputas {
+  id_disputa      String    @id @default(uuid()) @db.Uuid
+  tenant_id       String    @db.Uuid
+  sociedad_id     String    @db.Uuid
+  resultado_id    String?   @db.Uuid
+  comisionado_id  String    @db.Uuid
+  referencia_tipo String?
+  referencia_id   String?
+  clasificacion   String?
+  tipo            String?
+  descripcion     String
+  estado          String    @default("abierta")
+  sla_vence_en    DateTime? @db.Timestamptz
+  sla_fecha       DateTime? @db.Date
+  asignada_a      String?   @db.Uuid
+  resuelta_en     DateTime? @db.Timestamptz
+  resolucion      String?
+  genera_ajuste   Boolean   @default(false)
+  abierta_por     String?   @db.Uuid
+  created_at      DateTime  @default(now()) @db.Timestamptz
+
+  tenants         tenants    @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades      sociedades @relation(fields: [sociedad_id], references: [id_sociedad])
+  comisionados    comisionados @relation(fields: [comisionado_id], references: [id_comisionado])
+}
+
+// ============================================================
+// APROBACIONES DE PERÍODO (v3)
+// ============================================================
+
+model aprobaciones_periodo {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenant_id          String    @db.Uuid
+  periodo_id         String    @db.Uuid
+  puerta_numero      Int
+  estado             String    @default("pendiente")
+  aprobador_id       String?   @db.Uuid
+  aprobado_en        DateTime? @db.Timestamptz
+  comentario         String?
+  version_resultados String?
+  created_at         DateTime  @default(now()) @db.Timestamptz
+
+  tenants            tenants    @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  periodos           periodos   @relation(fields: [periodo_id], references: [id], onDelete: Cascade)
+  puertas            puertas_aprobacion @relation(fields: [puerta_numero], references: [numero])
+}
+
+// ============================================================
+// ACUSES DE PLAN (v3)
+// ============================================================
+
+model acuses_plan {
+  id_acuse              String    @id @default(uuid()) @db.Uuid
+  asignacion_id         String    @db.Uuid
+  comisionado_id        String    @db.Uuid
+  version_plan          Int
+  hash_pdf_mostrado     String?
+  estado                String    @default("pendiente")
+  aceptado_en           DateTime? @db.Timestamptz
+  aceptado_ip           String?
+  motivo_rechazo        String?
+  recordatorios_enviados Int      @default(0)
+  created_at            DateTime  @default(now()) @db.Timestamptz
+
+  asignaciones          asignaciones_plan @relation(fields: [asignacion_id], references: [id_asignacion], onDelete: Cascade)
+  comisionados          comisionados      @relation(fields: [comisionado_id], references: [id_comisionado], onDelete: Cascade)
+}
+
+// ============================================================
+// INTEGRACIONES (v3)
+// ============================================================
+
+model integraciones {
+  id_integracion  String    @id @default(uuid()) @db.Uuid
+  tenant_id       String    @db.Uuid
+  sociedad_id     String    @db.Uuid
+  nombre          String
+  tipo            String
+  sistema_origen  String    @default("otro")
+  config          Json      @default("{}")
+  mapeo_campos    Json      @default("{}")
+  version_mapeo   Int       @default(1)
+  estado          String    @default("activo")
+  ultimo_sync     DateTime? @db.Timestamptz
+  proximo_sync    DateTime? @db.Timestamptz
+  api_key_hash    String?
+  created_at      DateTime  @default(now()) @db.Timestamptz
+
+  tenants         tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades      sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+  log_integracion log_integracion[]
+  integracion_usuarios integracion_usuarios[]
+}
+
+model log_integracion {
+  id                   String   @id @default(uuid()) @db.Uuid
+  integracion_id       String   @db.Uuid
+  timestamp            DateTime @default(now()) @db.Timestamptz
+  registros_recibidos  Int      @default(0)
+  registros_procesados Int      @default(0)
+  registros_cuarentena Int      @default(0)
+  registros_duplicados Int      @default(0)
+  errores              Json     @default("[]")
+  estado               String   @default("ok")
+  duracion_ms          Int?
+
+  integraciones        integraciones @relation(fields: [integracion_id], references: [id_integracion], onDelete: Cascade)
+}
+
+model integracion_usuarios {
+  id               String   @id @default(uuid()) @db.Uuid
+  integracion_id   String   @db.Uuid
+  id_externo_usuario String
+  comisionado_id   String   @db.Uuid
+  activo           Boolean  @default(true)
+  created_at       DateTime @default(now()) @db.Timestamptz
+
+  integraciones    integraciones @relation(fields: [integracion_id], references: [id_integracion], onDelete: Cascade)
+  comisionados     comisionados  @relation(fields: [comisionado_id], references: [id_comisionado], onDelete: Cascade)
+
+  @@unique([integracion_id, id_externo_usuario])
+}
+
+// ============================================================
+// TERRITORIOS (v3)
+// ============================================================
+
+model territorios {
+  id_territorio           String    @id @default(uuid()) @db.Uuid
+  tenant_id               String    @db.Uuid
+  sociedad_id             String    @db.Uuid
+  nombre                  String
+  tipo                    String
+  comisionado_titular_id  String?   @db.Uuid
+  comisionados_secundarios String[]  @default([])
+  vigencia_desde          DateTime  @db.Date
+  vigencia_hasta          DateTime? @db.Date
+  created_at              DateTime  @default(now()) @db.Timestamptz
+
+  tenants                 tenants   @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  sociedades              sociedades @relation(fields: [sociedad_id], references: [id_sociedad], onDelete: Cascade)
+  titular                 comisionados? @relation(fields: [comisionado_titular_id], references: [id_comisionado])
+}
+
+// ============================================================
+// NOTIFICACIONES (v3)
+// ============================================================
+
+model notificaciones {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenant_id   String   @db.Uuid
+  usuario_id  String   @db.Uuid
+  tipo_evento String
+  payload     Json     @default("{}")
+  canal       String   @default("in_app")
+  estado      String   @default("pendiente")
+  intentos    Int      @default(0)
+  leida       Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamptz
+
+  tenants     tenants  @relation(fields: [tenant_id], references: [id_tenant], onDelete: Cascade)
+  usuarios    usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// AUDIT LOG (v3)
+// ============================================================
+
+model audit_log {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenant_id     String?  @db.Uuid
+  tabla         String
+  registro_id   String   @db.Uuid
+  operacion     String
+  campo         String?
+  valor_anterior Json?
+  valor_nuevo   Json?
+  usuario_id    String?  @db.Uuid
+  ip_origen     String?
+  hash_anterior String?
+  created_at    DateTime @default(now()) @db.Timestamptz
+}

@@ -1,23 +1,39 @@
 'use server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/auth'
+import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 export async function cambiarRol(formData: FormData) {
-  const supabase = await createClient()
-  const { error } = await supabase.rpc('cambiar_rol_usuario', {
-    p_usuario_id: formData.get('usuario_id') as string,
-    p_rol_base: formData.get('rol_base') as string,
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('No autenticado')
+  const tenantId = (session as any).tenantId as string | undefined
+  if (!tenantId) throw new Error('Sin tenant')
+
+  await db.usuarioTenant.updateMany({
+    where: {
+      usuarioId: formData.get('usuario_id') as string,
+      tenantId,
+    },
+    data: { rolBase: formData.get('rol_base') as string },
   })
-  if (error) throw new Error(error.message)
+
   revalidatePath('/dashboard/equipo')
 }
 
 export async function toggleActivo(formData: FormData) {
-  const supabase = await createClient()
-  const { error } = await supabase.rpc('toggle_activo_usuario', {
-    p_usuario_id: formData.get('usuario_id') as string,
-    p_activo_actual: formData.get('activo') === 'true',
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('No autenticado')
+  const tenantId = (session as any).tenantId as string | undefined
+  if (!tenantId) throw new Error('Sin tenant')
+
+  const activoActual = formData.get('activo') === 'true'
+  await db.usuarioTenant.updateMany({
+    where: {
+      usuarioId: formData.get('usuario_id') as string,
+      tenantId,
+    },
+    data: { activo: !activoActual },
   })
-  if (error) throw new Error(error.message)
+
   revalidatePath('/dashboard/equipo')
 }

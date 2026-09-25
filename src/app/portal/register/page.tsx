@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -9,7 +9,6 @@ export default function PortalRegisterPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   function set(field: string) { return (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [field]: e.target.value })) }
 
@@ -17,16 +16,17 @@ export default function PortalRegisterPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: { data: { nombre: form.nombre } },
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: form.nombre, email: form.email, password: form.password }),
     })
-    if (signUpError) { setError(signUpError.message); setLoading(false); return }
-    if (data.user) {
-      await supabase.from('usuarios_app').insert({ id: data.user.id, nombre: form.nombre, email: form.email })
-    }
+    const json = await res.json()
+    if (!res.ok) { setError(json.error ?? 'Error al crear cuenta'); setLoading(false); return }
+    const result = await signIn('credentials', { email: form.email, password: form.password, redirect: false })
+    if (result?.error) { setError('Cuenta creada pero no se pudo iniciar sesión'); setLoading(false); return }
     router.push('/portal')
+    router.refresh()
   }
 
   return (

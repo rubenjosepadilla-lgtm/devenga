@@ -1,16 +1,22 @@
 'use server'
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/auth'
+import { db } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 
 export async function crearSociedad(formData: FormData) {
-  const supabase = await createClient()
-  const { error } = await supabase.rpc('crear_sociedad', {
-    p_pais: formData.get('pais') as string,
-    p_identificador_fiscal: formData.get('identificador_fiscal') as string,
-    p_nombre: formData.get('nombre') as string,
-    p_sistema_nomina: formData.get('sistema_nomina') as string,
-    p_modo_integracion: (formData.get('modo_integracion') as string) || 'manual',
+  const session = await auth()
+  if (!session?.user?.id) throw new Error('No autenticado')
+
+  const tenantId = (session as any).tenantId as string | undefined
+  if (!tenantId) throw new Error('Sin tenant activo')
+
+  await db.sociedad.create({
+    data: {
+      tenantId,
+      pais: formData.get('pais') as string,
+      nombre: formData.get('nombre') as string,
+    },
   })
-  if (error) throw new Error(error.message)
+
   revalidatePath('/dashboard/sociedades')
 }

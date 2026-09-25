@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -9,9 +9,9 @@ import { tenantDelUsuario } from '@/lib/datos/tenant'
 import { sociedadesDelUsuario } from '@/lib/datos/sociedad-activa'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  const session = await auth()
+  if (!session?.user?.id) redirect('/login')
+  const user = session.user
 
   const tenantCtx = await tenantDelUsuario()
   if (!tenantCtx) redirect('/onboarding')

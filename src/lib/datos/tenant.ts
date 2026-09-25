@@ -1,37 +1,33 @@
-import { createClient } from '@/lib/supabase/server'
-import type { Tenant, RolBaseTenant } from '@/lib/dominio/tipos'
+import { auth } from '@/auth'
+import { db } from '@/lib/db'
 
-export interface TenantConRol {
-  tenant: Tenant
-  rol_base: RolBaseTenant
+export type TenantCtx = {
+  tenant: { id_tenant: string; nombre_comercial: string; pais_base: string }
+  rol_base: string
+  usuario_id: string
 }
 
-/**
- * Retorna el primer tenant activo del usuario autenticado.
- * Usa dos queries separadas para evitar depender del join relacional de PostgREST.
- */
-export async function tenantDelUsuario(): Promise<TenantConRol | null> {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
+export async function tenantDelUsuario(): Promise<TenantCtx | null> {
+  const session = await auth()
+  const userId = session?.user?.id
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tenantId = (session as any)?.tenantId as string | undefined
 
-    const { data, error } = await supabase.rpc('obtener_mi_tenant')
-    if (error || !data) return null
+  if (!userId || !tenantId) return null
 
-    const row = data as Record<string, unknown>
-    return {
-      tenant: {
-        id_tenant: row.id_tenant,
-        nombre_comercial: row.nombre_comercial,
-        pais_base: row.pais_base,
-        dominio_personalizado: row.dominio_personalizado ?? null,
-        logo_principal: row.logo_principal ?? null,
-        color_primario: row.color_primario ?? null,
-      } as Tenant,
-      rol_base: row.rol_base as RolBaseTenant,
-    }
-  } catch {
-    return null
+  const ut = await db.usuarioTenant.findFirst({
+    where: { usuarioId: userId, tenantId, activo: true },
+    include: { tenant: true },
+  })
+  if (!ut) return null
+
+  return {
+    tenant: {
+      id_tenant: ut.tenant.idTenant,
+      nombre_comercial: ut.tenant.nombreComercial,
+      pais_base: ut.tenant.paisBase,
+    },
+    rol_base: ut.rolBase,
+    usuario_id: userId,
   }
 }

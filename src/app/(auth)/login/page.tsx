@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -10,14 +10,13 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false); return }
+    const result = await signIn('credentials', { email, password, redirect: false })
+    if (result?.error) { setError('Email o contraseña incorrectos'); setLoading(false); return }
     router.push('/dashboard')
   }
 
@@ -43,8 +42,8 @@ export default function LoginPage() {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
-        <p className="text-sm text-gray-500 mt-4 text-center">
-          ¿No tienes cuenta? <Link href="/register" className="text-violet-700 hover:underline">Regístrate</Link>
+        <p className="mt-4 text-sm text-gray-400 text-center">
+          ¿No tienes cuenta? <Link href="/register" className="text-violet-700 hover:underline">Crear cuenta</Link>
         </p>
       </div>
     </div>
